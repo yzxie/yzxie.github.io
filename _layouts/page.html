@@ -4,7 +4,7 @@ layout: default
 
 <!-- Page Header -->
 <header class="intro-header" style="background-image: url('{{ site.baseurl }}/{% if page.header-img %}{{ page.header-img }}{% else %}{{ site.header-img }}{% endif %}')">
-    <div class="container">
+    <div class="container" style="height: 60px;">
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 ">
                 <div class="site-heading">
@@ -100,7 +100,7 @@ layout: default
 
                 <!-- Short About -->
                 <section class="visible-md visible-lg">
-                    <hr><h5><a href="{{'/about/' | prepend: site.baseurl }}">ABOUT ME</a></h5>
+                    <!-- <hr><h5><a href="{{'/about/' | prepend: site.baseurl }}">ABOUT ME</a></h5> -->
                     <div class="short-about">
                         {% if site.sidebar-avatar %}
                             <img src="{{site.sidebar-avatar}}" />
@@ -109,6 +109,7 @@ layout: default
                             <p>{{site.sidebar-about-description}}</p>
                         {% endif %}
                         <!-- SNS Link -->
+                        {% if false %}
                         <ul class="list-inline">
                             {% if site.RSS %}
                             <li>
@@ -181,6 +182,7 @@ layout: default
                             </li>
                             {% endif %}
                         </ul>
+                        {% endif %}
                     </div>
                 </section>
                 <!-- Friends Blog -->

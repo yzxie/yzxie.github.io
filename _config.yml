@@ -1,19 +1,19 @@
 # Site settings
-title: Xyz Blog
-SEOTitle: 谢议尊的博客 | Xyz Blog
+title: XYZ Blog
+SEOTitle: XYZ's Blog | 谢议尊的博客
 header-img: img/home-bg.jpg
-email: huxpro@gmail.com
+email: xieyizun@gmail.com
 description: "记录技术感悟，也记录生活点滴。"
-keyword: "谢议尊, Xyz谢议尊, Xyz, yzxie, Java, Python, Go, Shell, Linux, Javascript"
+keyword: "谢议尊, XYZ谢议尊, XYZ, yzxie, Java, Python, Go, Shell, Linux, Javascript"
 url: "https://yzxie.github.io"              # your host, for absolute URL
 baseurl: ""                             # for example, '/blog' if your blog hosted on 'host/blog'
 
 
 
 # SNS settings
-RSS: true
-weibo_username:     谢议尊
-zhihu_username:     谢先生
+RSS: false
+# weibo_username:     2854492414
+# zhihu_username:     xie-xiansheng
 github_username:    yzxie
 #twitter_username:   huxpro
 #facebook_username:  huxpro
@@ -48,7 +48,7 @@ kramdown:
 
 
 # Disqus settings
-disqus_username: Xyz
+disqus_username: XYZ
 
 # Netease setttings
 netease_comment: false
@@ -67,13 +67,13 @@ netease_comment: false
 
 # Sidebar settings
 sidebar: true                           # whether or not using Sidebar.
-sidebar-about-description: "专注于后端开发，也写写前端代码，<br>技术改变人生"
+sidebar-about-description: "专注于后端开发，也写写前端代码<br>技术改变人生"
 sidebar-avatar: /img/avatar.jpeg      # use absolute URL, seeing it's used in both `/` and `/about/`
 
 
 
 # Featured Tags
-featured-tags: true                     # whether or not using Feature-Tags
+featured-tags: false                     # whether or not using Feature-Tags
 featured-condition-size: 1              # A tag will be featured if the size of it is more than this condition value
 
 
@@ -85,39 +85,39 @@ service-worker: true
 
 
 # Friends
-friends: [
-    # {
-    #     title: "Su",
-    #     href: "http://su.gallery/"
-    # },{
-    #     title: "乱序",
-    #     href: "http://mida.re/"
-    # },{
-    #     title: "前端外刊评论",
-    #     href: "http://qianduan.guru/"
-    # },{
-    #     title: "天镶的博客",
-    #     href: "http://lingyu.wang/"
-    # },{
-    #     title: "Luke 的自留地",
-    #     href: "http://hmqk1995.github.io"
-    # },{
-    #     title: "Ebn's Blog",
-    #     href: "http://ebnbin.com/"
-    # },{
-    #     title: "SmdCn's Blog",
-    #     href: "http://blog.smdcn.net"
-    # },{
-    #     title: "解旻的博客",
-    #     href: "http://xieminis.me/"
-    # },{
-    #     title: "DHong Say",
-    #     href: "http://dhong.co"
-    # },{
-    #     title: "尹峰以为",
-    #     href: "http://ingf.github.io/"
-    # },{
-    #     title: "前端神盾局",
-    #     href: "http://wepiaofei.github.io/blog/"
-    # }
-]
+# friends: [
+#     # {
+#     #     title: "Su",
+#     #     href: "http://su.gallery/"
+#     # },{
+#     #     title: "乱序",
+#     #     href: "http://mida.re/"
+#     # },{
+#     #     title: "前端外刊评论",
+#     #     href: "http://qianduan.guru/"
+#     # },{
+#     #     title: "天镶的博客",
+#     #     href: "http://lingyu.wang/"
+#     # },{
+#     #     title: "Luke 的自留地",
+#     #     href: "http://hmqk1995.github.io"
+#     # },{
+#     #     title: "Ebn's Blog",
+#     #     href: "http://ebnbin.com/"
+#     # },{
+#     #     title: "SmdCn's Blog",
+#     #     href: "http://blog.smdcn.net"
+#     # },{
+#     #     title: "解旻的博客",
+#     #     href: "http://xieminis.me/"
+#     # },{
+#     #     title: "DHong Say",
+#     #     href: "http://dhong.co"
+#     # },{
+#     #     title: "尹峰以为",
+#     #     href: "http://ingf.github.io/"
+#     # },{
+#     #     title: "前端神盾局",
+#     #     href: "http://wepiaofei.github.io/blog/"
+#     # }
+# ]
