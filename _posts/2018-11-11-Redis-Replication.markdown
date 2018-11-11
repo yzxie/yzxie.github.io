@@ -48,25 +48,22 @@ Redis的主从同步支持两种机制，一种为master同步给所有slave，�
 ### PSYNC
 
 在Redis2.8+版本，Redis的slave在与master断开连接重连的时候，默认是使用新的PSYNC同步方法，而不是原来的SYNC，因为断线重连时，slave是包含有数据的，只是可能落后于master，所以没必要又进行一次全量同步。PSYNC的实现具体为：
-
 命令格式：
-
 ```
 PSYNC <runid> <offset>
 runid:主服务器ID
 offset:从服务器最后接收命令的偏移量
 ```
 
-1 run_id：master的id，表面master身份，slave使用该slave来记住自己目前是同步哪个master；如果slave没有保存，则发送PSYNC ? -1，执行全量同步；数值为40位的十六进制字符串，Redis重启后会改变，从而保证重启后，slave使用全量复制，保证数据安全性。
+1. run_id：master的id，表面master身份，slave使用该slave来记住自己目前是同步哪个master；如果slave没有保存，则发送PSYNC ? -1，执行全量同步；数值为40位的十六进制字符串，Redis重启后会改变，从而保证重启后，slave使用全量复制，保证数据安全性。
 
-2 replication offset：即当前执行主从同步到哪里了，master维护自身当前同步了多少给slaves，即发送了N个字节给slave，则会执行offset+N；slave维护自身当前从master同步了多少，通常slave的小于或等于master的；
+2. replication offset：即当前执行主从同步到哪里了，master维护自身当前同步了多少给slaves，即发送了N个字节给slave，则会执行offset+N；slave维护自身当前从master同步了多少，通常slave的小于或等于master的；
 
-3 复制积压缓冲区：即master已同步写命令缓存列表，master以FIFO的方式保存最近同步给slave的数据，列表大小一定，所以如果slave重连时，slave的replication offset月master的replication offset的差值大于该列表大小，则说明slave丢失的部分数据（写命令）不能从该列表获取了，此时需要执行全量同步，否则master将这个差值对应列表中的数据发送给slave，slave只需执行这些写命令即可。
+3. 复制积压缓冲区：即master已同步写命令缓存列表，master以FIFO的方式保存最近同步给slave的数据，列表大小一定，所以如果slave重连时，slave的replication offset月master的replication offset的差值大于该列表大小，则说明slave丢失的部分数据（写命令）不能从该列表获取了，此时需要执行全量同步，否则master将这个差值对应列表中的数据发送给slave，slave只需执行这些写命令即可。
     
 Redis4.0推出了PSYNC2.0，具体特性再分析。
 
 ## CAP理论
 
 CAP理论为：在分布式系统中，多个节点之间只能满足CP或AP，即强一致性和高可用是不能同时满足的。Redis的主从同步是AP的，具体对高可用的强度要求，可用通过在redis.conf配置，即有至少有多少个slaves存在和至多多少秒内没响应，则才执行写请求，否则报错，配置与说明如图：默认为关闭这个特性，即master始终接收客户端写请求。
-
 ![](/img/articles/20181111/p4.jpg)
