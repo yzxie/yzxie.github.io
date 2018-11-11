@@ -1,2 +1,14 @@
+---
+layout:     post
+title:      "Hello 2018"
+subtitle:   "Hello World, Hello Blog"
+date:       2018-11-11 12:00:00
+author:     "XYZ"
+header-img: "img/post-bg-2015.jpg"
+tags:
+    - 感悟
+---
+
 记录走过的路，踩过的坑，回头看看，都是小事。
+
 勤思考，善总结，点滴成就人生。
