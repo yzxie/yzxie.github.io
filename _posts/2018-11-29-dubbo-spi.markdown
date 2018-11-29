@@ -11,6 +11,7 @@ tags:
 
 ### 概述
 ExtensionLoader类为Dubbo框架SPI的实现类，相当于jdk的ServiceLoader，通过ExtensionLoader配合URL完成对应类实现的加载，是Dubbo框架高度可拓展性实现的基础。
+
 ### 自定义SPI实现
 1. 增加了根据实例别名的概念，如：
 dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol，默认java spi则只在META-INF/services目录，包含接口全名作为文件，文件内容为各个实现类全名列表；
@@ -24,12 +25,13 @@ dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol，默认java spi则只�
 * 定义：某个接口的包装类，实现该接口并且只包含一个以该接口作为唯一参数的构造函数的类
 * 作用：用于增强、装饰该接口实际提供功能的类的实例，即该接口的具体实现，多个包装器类无序地包装到该实例上。如Protocol接口包括两个wrapper类分别为：
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129175716397.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+
 ### URL总线
- dubbo为以URL为主线的一个框架，即根据URL中的相关参数，adaptive自适应选择对应的spi实现类，核心实现为：
+* dubbo为以URL为主线的一个框架，即根据URL中的相关参数，adaptive自适应选择对应的spi实现类，核心实现为：
 ![getAdaptiveExtensionClass](https://img-blog.csdnimg.cn/20181129174539969.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174707945.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174745243.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
-基本逻辑为：
+* 基本逻辑为：
 根据构造函数传入的type:
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174820620.png)
 依次查看type的每个方法的每个参数，如果存在参数类型为URL则就找到了；如果没有，则继续查看参数所属类的每个方法，是否存在“以get开头，不存在参数，返回类型为URL”的方法，有则找到了。
