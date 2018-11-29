@@ -1,0 +1,70 @@
+ExtensionLoader类为dubbo框架SPI的实现类，通过ExtensionLoader配合URL完成对应类实现的加载，是dubbo框架高度可拓展性实现的基础。具体实现为：
+### 自定义SPI实现
+1. 增加了根据实例别名的概念，如：
+jdk=java.xxx.JDK，而默认java spi则只在META-INF/services目录，包含接口全名作为文件，文件内容为各个实现类全名列表；
+2. 增加目录结构，如META-INF/dubbo/internal，而不只是MATE-INF/services
+1,2 如图：
+![自定义spi](https://img-blog.csdnimg.cn/20181129180140946.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+4.  Adative与Activate
+* Adative为根据URL参数，动态决定选择哪种接口实现，一个接口运行时只能包括一个Adaptive实现类。
+* Activate为根据URL参数，动态决定是否激活某个类，如ProtocolFilter接口的实现类就是根据Activate规则，决定激活哪些过滤器。
+5.  wrapper
+* 定义：某个接口的包装类，实现该接口并且只包含一个以该接口作为唯一参数的构造函数的类
+* 作用：用于增强、装饰该接口实际提供功能的类的实例，即该接口的具体实现，多个包装器类无序地包装到该实例上。如Protocol接口包括两个wrapper类分别为：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129175716397.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+### URL总线
+ dubbo为以URL为主线的一个框架，即根据URL中的相关参数，adaptive自适应选择对应的spi实现类，核心实现为：
+![getAdaptiveExtensionClass](https://img-blog.csdnimg.cn/20181129174539969.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174707945.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174745243.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+基本逻辑为：
+根据构造函数传入的type:
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174820620.png)
+依次查看type的每个方法的每个参数，如果存在参数类型为URL则就找到了；如果没有，则继续查看参数所属类的每个方法，是否存在“以get开头，不存在参数，返回类型为URL”的方法，有则找到了。
+
+### 案例：ServiceConfig服务注册
+在dubbo-bootstrap中，遍历ServiceConfig列表，开始提供者的服务导出注册。
+ServiceConfig的export导出提供者的方法到注册中心，从源码实现来看是通过ExtensionLoader以下声明了一个protocol：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129175258140.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+实际调用的是RegistryProtocol，而能判断最终调用的是RegistryProtocol，是因为url为：registry://xxx，具体为invoker的url为registry://xxx，即url.getProtocol()返回为registry。
+Protocol接口为方法export(Invoker invokder)对应的Invoker接口继承于Node，Node接口包含URL getUrl()方法。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129175418953.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+dubbo生成的adative类：
+
+```
+package com.alibaba.dubbo.rpc;
+import com.alibaba.dubbo.common.extension.ExtensionLoader;
+public class Protocol$Adpative implements com.alibaba.dubbo.rpc.Protocol {
+	public void destroy() {
+		throw new UnsupportedOperationException("method public abstract void com.alibaba.dubbo.rpc.Protocol.destroy() of interface com.alibaba.dubbo.rpc.Protocol is not adaptive method!");
+	}
+	public int getDefaultPort() {
+		throw new UnsupportedOperationException("method public abstract int com.alibaba.dubbo.rpc.Protocol.getDefaultPort() of interface com.alibaba.dubbo.rpc.Protocol is not adaptive method!");
+	}
+	public com.alibaba.dubbo.rpc.Exporter export(com.alibaba.dubbo.rpc.Invoker arg0) throws com.alibaba.dubbo.rpc.Invoker {
+		if (arg0 == null) 
+			throw new IllegalArgumentException("com.alibaba.dubbo.rpc.Invoker argument == null");
+		if (arg0.getUrl() == null) 
+			throw new IllegalArgumentException("com.alibaba.dubbo.rpc.Invoker argument getUrl() == null");
+		com.alibaba.dubbo.common.URL url = arg0.getUrl();
+		// 此处url.getProtocol不为null，返回registry
+		String extName = ( url.getProtocol() == null ? "dubbo" : url.getProtocol() );
+		if(extName == null) 
+			throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.rpc.Protocol) name from url(" + url.toString() + ") use keys([protocol])");
+		com.alibaba.dubbo.rpc.Protocol extension = (com.alibaba.dubbo.rpc.Protocol)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.rpc.Protocol.class).getExtension(extName);
+		return extension.export(arg0);
+	}
+	public com.alibaba.dubbo.rpc.Invoker refer(java.lang.Class arg0, com.alibaba.dubbo.common.URL arg1) throws java.lang.Class {
+		if (arg1 == null) 
+			throw new IllegalArgumentException("url == null");
+		com.alibaba.dubbo.common.URL url = arg1;
+		String extName = ( url.getProtocol() == null ? "dubbo" : url.getProtocol() );
+		if(extName == null) 
+			throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.rpc.Protocol) name from url(" + url.toString() + ") use keys([protocol])");
+		com.alibaba.dubbo.rpc.Protocol extension = (com.alibaba.dubbo.rpc.Protocol)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.rpc.Protocol.class).getExtension(extName);
+		return extension.refer(arg0, arg1);
+	}
+}
+```
+参考：
+https://blog.csdn.net/yangxiaobo118/article/details/80696830
