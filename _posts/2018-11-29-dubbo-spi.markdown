@@ -1,7 +1,19 @@
-ExtensionLoader类为dubbo框架SPI的实现类，通过ExtensionLoader配合URL完成对应类实现的加载，是dubbo框架高度可拓展性实现的基础。具体实现为：
+---
+layout:     post
+title:      "Dubbo框架基石：URL总线和ExtensionLoader"
+subtitle:   "Dubbo SPI"
+date:       2018-11-29 18:12:00
+author:     "XYZ"
+header-img: "img/article-bg1.jpg"
+tags:
+    - Dubbo源码分析
+---
+
+### 概述
+ExtensionLoader类为Dubbo框架SPI的实现类，相当于jdk的ServiceLoader，通过ExtensionLoader配合URL完成对应类实现的加载，是Dubbo框架高度可拓展性实现的基础。
 ### 自定义SPI实现
 1. 增加了根据实例别名的概念，如：
-jdk=java.xxx.JDK，而默认java spi则只在META-INF/services目录，包含接口全名作为文件，文件内容为各个实现类全名列表；
+dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol，默认java spi则只在META-INF/services目录，包含接口全名作为文件，文件内容为各个实现类全名列表；
 2. 增加目录结构，如META-INF/dubbo/internal，而不只是MATE-INF/services
 1,2 如图：
 ![自定义spi](https://img-blog.csdnimg.cn/20181129180140946.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
