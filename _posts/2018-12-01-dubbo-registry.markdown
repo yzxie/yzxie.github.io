@@ -1,3 +1,14 @@
+---
+layout:     post
+title:      "Dubbo源码分析：Register注册中心"
+subtitle:   "Dubbo Register"
+date:       2018-12-01 14:12:00
+author:     "XYZ"
+header-img: "img/article-bg1.jpg"
+tags:
+    - Dubbo源码分析
+---
+
 ## Registry
 每个注册中心对应一个Registry实例，包括dubbo，zookeeper，redis, multicast。
 （1）Set<URL>类型的registed：记录provider注册过的service url。
