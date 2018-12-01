@@ -12,7 +12,7 @@ tags:
 提供者Provider：服务提供者如何将自己能提供的服务暴露出去，使得服务消费者可以远程调用。
 消费者Consumer：服务消费者对自己需要的服务，如何感知该服务在哪里，如何通过远程调用的方式，调用服务提供者提供的服务。
 核心接口如下：
-![在这里插入图片描述](https://img-blog.csdnimg.cn/20181201172718631.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181201233410370.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
 ## 核心接口设计
 1. Protocol：RPC协议接口
 * export方法： 提供者需要实现export方法，定义如何将自己提供的服务保留出去，同时如何使得消费者可以调用。
