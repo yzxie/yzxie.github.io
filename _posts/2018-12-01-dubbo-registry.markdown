@@ -13,7 +13,7 @@ tags:
 每个注册中心对应一个Registry实例，包括dubbo，zookeeper，redis, multicast。
 （1）Set<URL>类型的registed：记录provider注册过的service url。
 （2）ConcurrentMap<URL, Set<NotifyListener>> subscribed：consumer订阅URL，URL有变化时的监听器NotifyListener；其中多个NotifyListener是因为consumer存在多个地方调用这个service，NotifyListener的实现为RegistryDirectory。
-（3）ConcurrentMap<URL, Map<String, List<URL>>> notified：
+（3）ConcurrentMap<URL, Map<String, List<URL>>> notified：key为消费者url, value为服务提供者url列表。存储消费者consumerURL对应提供者providerURL列表，之后真正进行服务调用的时候，直接从notified列表取出providerURL即可。
 （4）file与properties：consumer将从注册中心获取的provider urls保存到本地file，同时加载到properties，避免注册中心挂了，此时consumer还可以连接provider。
 
 ## RegistryFactory
