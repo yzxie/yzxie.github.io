@@ -8,30 +8,42 @@ header-img: "img/article-bg1.jpg"
 tags:
     - Dubbo源码分析
 ---
-
 ### 概述
-ExtensionLoader类为Dubbo框架SPI的实现类，相当于jdk的ServiceLoader，通过ExtensionLoader配合URL完成对应类实现的加载，是Dubbo框架高度可拓展性实现的基础。
-
-### 自定义SPI实现
-1. 增加了根据实例别名的概念，如：
+ExtensionLoader类为Dubbo框架SPI的实现类，相当于JDK的ServiceLoader，也实现了Spring的IOC功能，通过ExtensionLoader配合URL完成对应类实现的加载，是Dubbo框架高度可拓展性实现的基础。以下各个规则和实现都是在ExtensionLoader提供实现，如从META-INF目录获取SPI的类声明，Adaptive注解配合URL参数或protocol，自适应获取SPI接口实现类等。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/201812021449007.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+### 自定义SPI
+1. 所有需要通过ExtensionLoader解析、设置属性，自适应获取实现类的接口，均需要增加@SPI声明，如下为：Protocol接口：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181202144655704.png)
+3. 增加了根据实例别名的概念，如：
 dubbo=org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol，默认java spi则只在META-INF/services目录，包含接口全名作为文件，文件内容为各个实现类全名列表；
-2. 增加目录结构，如META-INF/dubbo/internal，而不只是MATE-INF/services
+4. 增加存放spi定义文件的目录，包括：META-INF/dubbo，META-INF/dubbo/internal和META-INF/services，而不只是MATE-INF/services。
 1,2 如图：
 ![自定义spi](https://img-blog.csdnimg.cn/20181129180140946.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
-4.  Adative与Activate
-* Adative为根据URL参数，动态决定选择哪种接口实现，一个接口运行时只能包括一个Adaptive实现类。
+### Adaptive与Activate注解
+* @Adaptive为根据URL参数，在运行时动态决定选择哪种接口实现，@Adaptive注册可以用在实现类上，但是只能放在接口的其中一个实现类上。更多的时候是将@Adaptive注解放在接口方法上，表示这些方法可以在运行时决定使用哪个spi实现类。如下为注册工厂的接口：
+![registryFactory](https://img-blog.csdnimg.cn/2018120110000660.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+在getRegistry方法上使用@Adaptive({"protocol"})表示：根据URL的protocol参数的值，如：zookeeper://xxx，决定使用以下哪个注册工厂实现：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181201100253286.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+动态选择接口实现的核心源码如下：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181201100820145.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+如上图：为从method获取Adaptive注解，然后如下图：获取@Adaptive注解的value数组，如果没有则根据接口名设置value。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2018120110101028.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+如下图：
+* 根据value的值，决定是从url的parameter获取spi实现，还是根据URL的protocol选择spi实现。即：如果value值为protocol则根据url的protocol，否则根据url中parameter选择。
+* 通过value产生了getNameCode的具体值，根据getNameCode得出了当前选择的spi实现类的别名extName，最后通过getExtensionLoader(接口.class).getExtension(extName)加载最终调用的实现类。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181201102041539.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+
 * Activate为根据URL参数，动态决定是否激活某个类，如ProtocolFilter接口的实现类就是根据Activate规则，决定激活哪些过滤器。
-5.  wrapper
+### Wrapper包装器
 * 定义：某个接口的包装类，实现该接口并且只包含一个以该接口作为唯一参数的构造函数的类
 * 作用：用于增强、装饰该接口实际提供功能的类的实例，即该接口的具体实现，多个包装器类无序地包装到该实例上。如Protocol接口包括两个wrapper类分别为：
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129175716397.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
-
 ### URL总线
-* dubbo为以URL为主线的一个框架，即根据URL中的相关参数，adaptive自适应选择对应的spi实现类，核心实现为：
+ dubbo为以URL为主线的一个框架，即根据URL中的相关参数，adaptive自适应选择对应的spi实现类，核心实现为：
 ![getAdaptiveExtensionClass](https://img-blog.csdnimg.cn/20181129174539969.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174707945.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174745243.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
-* 基本逻辑为：
+基本逻辑为：
 根据构造函数传入的type:
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181129174820620.png)
 依次查看type的每个方法的每个参数，如果存在参数类型为URL则就找到了；如果没有，则继续查看参数所属类的每个方法，是否存在“以get开头，不存在参数，返回类型为URL”的方法，有则找到了。
