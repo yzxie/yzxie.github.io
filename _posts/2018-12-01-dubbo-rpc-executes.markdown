@@ -13,12 +13,12 @@ Dubbo支持在服务端通过在service或者method，通过executes参数设置
 ## 用法
 ### 服务级别
 限制 com.foo.BarService 的每个方法，服务器端并发执行（或占用线程池线程数）不能超过 10 个：
-<dubbo:service interface="com.foo.BarService" executes="10" />
+&lt;dubbo:service interface="com.foo.BarService" executes="10" /&gt;
 ### 方法级别
 限制 com.foo.BarService 的 sayHello 方法，服务器端并发执行（或占用线程池线程数）不能超过 10 个：
-<dubbo:service interface="com.foo.BarService">
-    <dubbo:method name="sayHello" executes="10" />
-</dubbo:service>
+&lt;dubbo:service interface="com.foo.BarService">
+    &lt;dubbo:method name="sayHello" executes="10" /&gt;
+&lt;/dubbo:service&gt;
 ## 源码实现
 * Java Semaphore：信号量
    * 定义：Java信号量类似于一个计数器，用于限制在任何时刻，只允许给定个线程对某个共享资源的访问。

@@ -13,18 +13,18 @@ Dubbo支持在服务或者方法粒度，通过actives参数，控制客户端�
 ## 用法
 #### 服务级别
 限制 com.foo.BarService 的每个方法，每客户端并发执行（或占用连接的请求数）不能超过 10 个：
-<dubbo:service interface="com.foo.BarService" actives="10" />
+&lt;dubbo:service interface="com.foo.BarService" actives="10" />
 或
-<dubbo:reference interface="com.foo.BarService" actives="10" />
+&lt;dubbo:reference interface="com.foo.BarService" actives="10" />
 #### 方法级别
 限制 com.foo.BarService 的 sayHello 方法，每客户端并发执行（或占用连接的请求数）不能超过 10 个：
-<dubbo:service interface="com.foo.BarService">
-    <dubbo:method name="sayHello" actives="10" />
-</dubbo:service>
+&lt;dubbo:service interface="com.foo.BarService"&gt;
+    &lt;dubbo:method name="sayHello" actives="10" /&gt;
+&lt;/dubbo:service>
 或
-<dubbo:reference interface="com.foo.BarService">
-    <dubbo:method name="sayHello" actives="10" />
-</dubbo:service>
+&lt;dubbo:reference interface="com.foo.BarService"&gt;
+    &lt;dubbo:method name="sayHello" actives="10" /&gt;
+&lt;/dubbo:service>
 如果dubbo:service和 dubbo:reference都配了actives，dubbo:reference优先。
 ## 源码实现
 1. 实现类：在rpc包下的ActiveLimitFilter，即通过过滤器的方式对请求进行过滤，当未达到actives个并发请求时，则将rpc请求直接传给下个过滤器，否则等待直到可以执行或者超时异常。
