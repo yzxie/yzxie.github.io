@@ -1,0 +1,73 @@
+---
+layout:     post
+title:      "Dubbo源码分析：rpc协议详解"
+subtitle:   "Dubbo rpc"
+date:       2018-12-03 22:12:00
+author:     "XYZ"
+header-img: "img/article-bg1.jpg"
+tags:
+    - Dubbo源码分析
+---
+## 概述
+RPC协议模块主要定义了服务提供者提供服务，消费者调用服务的一个整体架构。
+1. 服务提供者：当dubbo启动时，调用registry注册模块的RegistryProtocol，完成服务的相关元数据上传注册到注册中心，包括zookeeper，Redis或者多播；注册的具体方法为RegistryProtocol.export，export方法在进行注册前，会调用doLocalExport方法，在这个方法中，根据用户配置获取URL的protocol参数，调用对应的RPC协议实现，此时调用的是RPC模块的protocol的export方法，从而完成registry模块到rpc模块的调用，后期消费者请求的处理都是通过该protocol进行处理的。而在RegistryProtocol包含一个protocol的属性和setProtocol方法通过ExtensionLoader的adaptive机制注入。源码如下：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2018120611112127.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+protocol属性：根据URL的配置，使用ExtensionLoader注入对应的RPC实现。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111140249.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+2. 服务消费者：服务消费者主要为指定需要调用服务对应的接口和从注册中心获取的提供该服务的提供者的URL，然后获取一个代理对象，通过该代理对象发起对远程服务的调用。代理对象的创建时机为在spring容器启动加载bean是，在dubbo-config-spring模块中，将dubbo定义的reference融合到spring容器，产生spring的bean的时候：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111200748.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+之后在应用代码中，如下：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111210791.png)
+注入logConfService对象和调用listLogTypeAndApps方法进行RPC调用，则此时调用的是上面创建的代理对象，如果是dubbo协议，则在代理对象中调用dubbo-remoting模块对象进行远程通讯。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111228603.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+## 用法
+
+```
+<!-- 用dubbo协议在20880端口暴露服务 -->
+<dubbo:protocol name="dubbo" port="20880" />
+```
+
+其中name为提供者所选协议的具体实现，port为提供者监听端口
+服务提供者和服务消费者需要使用同一种RPC协议，不能使用不一样的。
+## dubbo支持的协议实现
+### dubbo协议
+dubbo协议为dubbo框架自身提供的一种RPC协议实现，也是dubbo框架默认的rpc协议，包括提供者监听消费者服务调用的请求和消费者服务调用的发起，数据序列化，远程通讯。其中所支持的序列化，在dubbo-serialization模块实现；所支持的数据远程通讯的方式，在dubbo-remoting模块实现。
+* 服务提供端创建请求处理器，并监听消费者服务调用请求：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111251692.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+调用关系：export -> openServer -> createServer
+* 服务消费端创建服务调用器，作为暴露给应用代码的消费端代理对象或者说是在spring容器管理的reference对象，的底层实际远程服务发起和调用：
+创建DubboInvoker对象，需要通过getClients方法获取进行远程通讯的client对象
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111304289.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+当在应用代码中调用代理对象是，底层交给DubboInvoker的doInvoker发起实际的调用。
+对于不需要返回值的调用，即isOneway，则调用完直接返回；
+对于需要返回值的调用，则获取一个ResponseFuture对象，异步获取返回值。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111328254.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+### hession协议
+hession协议主要为通过调用hession框架的客户端和服务端，创建对应的代理类完成消费者服务调用和提供者服务的处理，相关数据传输格式，数据通信方式由hession提供。
+* 服务提供端
+传入服务实现代理impl用于实际服务端方法调用，绑定url并指定HessianHandler请求处理器，处理消费端的服务调用请求。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2018120611134616.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+HessianHandler实际处理消费端请求：从doExport中存放的skeletonMap中获取封装了服务实现代理的impl的skeleton，通过skeleton处理请求。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111356515.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+* 服务消费端
+通过hessianProxyFactory代理工厂创建hessianProxy代理对象，通过该代理对象发起服务调用请求，请求方式可以是http，服务调用的相关参数和参数值在url中，跟普通http请求差不多。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111430348.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+### http协议
+与hessian协议类似，也是通过http客户端和服务端进行服务调用。具体为使用spring框架的remoting包的相关类进行远程调用。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111451114.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+消费端服务调用：
+![在这里插入图片描述](https://img-blog.csdnimg.cn/20181206111500911.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+### injvm协议
+injvm协议其实是本地服务调用，获取进程内存中的服务提供者对象，然后进行方法调用。
+![在这里插入图片描述](https://img-blog.csdnimg.cn/2018120611152866.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
+###  rest协议
+
+### redis协议
+
+### memcached协议
+
+### rmi协议
+
+### thrift协议
+
+### webservice协议
