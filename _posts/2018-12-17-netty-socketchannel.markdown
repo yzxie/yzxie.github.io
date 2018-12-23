@@ -24,7 +24,7 @@ selector -> channel -> channelPipeline -> channelHandlers，而ServerBootstrapAc
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181221174135609.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
 2. ServerSocketChannel的unsafe实现
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181221174328244.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
-3. newUnsafe方法，根据具体的ServerSocketChannel的返回对应的unsafe实例，注意unsafe实例也是ServerSocketChannel类型，只是说明unsafe的方法只能在内部使用而已，如果在外部使用是不安全。以下以NioServerSocketChannel为例：由1知，调用的是unsafe.read()，具体read方法内会调用doReadMessages方法，doReadMessages方法的实现如下：
+3. newUnsafe方法，根据具体的ServerSocketChannel的返回对应的unsafe实例，注意unsafe是ServerSocketChannel的一个门面类，里面封装了一个channel实例，只是说明unsafe的方法只能在内部使用而已，如果在外部使用是不安全。以下以NioServerSocketChannel为例：由1知，调用的是unsafe.read()，具体read方法内会调用doReadMessages方法，doReadMessages方法的实现如下：
 （1）通过SocketUtils.accept(javaChannel())：从Java NIO的ServerSocketChannel中获取Java NIO的SocketChannel；
 （2）通过new NioSocketChannel，从Java NIO的SocketChannel创建Netty的SocketChannel实例，其中NioSocketChannel为SocketChannel的一个实现类，故在这里创建了Netty的SocketChannel对象，然后在pipeline中的流通的数据Object msg，就是SocketChannel类型。
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20181222004614135.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3UwMTAwMTM1NzM=,size_16,color_FFFFFF,t_70)
