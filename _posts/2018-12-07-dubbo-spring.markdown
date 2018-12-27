@@ -155,17 +155,17 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
 ```
 public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean, DisposableBean, ApplicationContextAware, ApplicationListener<ContextRefreshedEvent>, BeanNameAware 
 ```
-以下是这些接口的作用：
+以下是这些接口的作用
+
 #### InitializingBean：在bean的所有属性都设好值后，自定义bean的实例化过程
 ```
 package org.springframework.beans.factory;
-
-/
+/*
   Interface to be implemented by beans that need to react once all their
   properties have been set by a BeanFactory: for example, to perform custom
   initialization, or merely to check that all mandatory properties have been set.
  
-  <p>An alternative to implementing InitializingBean is specifying a custom
+  An alternative to implementing InitializingBean is specifying a custom
   init-method, for example in an XML bean definition.
   For a list of all bean lifecycle methods, see the BeanFactory javadocs.
  
@@ -175,22 +175,21 @@ package org.springframework.beans.factory;
   @see BeanFactory
   @see org.springframework.beans.factory.support.RootBeanDefinition#getInitMethodName
   @see org.springframework.context.ApplicationContextAware
- /
+ /*
 public interface InitializingBean {
-
-	/
+	/*
 	  Invoked by a BeanFactory after it has set all bean properties supplied
 	  (and satisfied BeanFactoryAware and ApplicationContextAware).
-	  <p>This method allows the bean instance to perform initialization only
+	  This method allows the bean instance to perform initialization only
 	  possible when all bean properties have been set and to throw an
 	  exception in the event of misconfiguration.
 	  @throws Exception in the event of misconfiguration (such
 	  as failure to set an essential property) or if initialization fails.
-	 /
+	 /*
 	void afterPropertiesSet() throws Exception;
-
 }
 ```
+
 * 提供了一个afterPropertiesSet方法，在bean的所有属性通过Spring的beanFactory设值之后，可以在afterPropertiesSet方法中，自定义一些初始化操作，即
 
 * 在ServiceBean中是初始化application，module，registries，monitor，path。最后调用export方法进行注册。
@@ -198,35 +197,33 @@ public interface InitializingBean {
 * 在ReferenceBean中，除了进行application，module，monitor等设值外，会调用FactoryBean的getObject生成服务代理proxy。具体看FactoryBean。
 
 #### FactoryBean：spring容器BeanFactory获取bean的实例对象
+
 ```
 package org.springframework.beans.factory;
 
-/
+/*
   Interface to be implemented by objects used within a {@link BeanFactory} which
   are themselves factories for individual objects. If a bean implements this
   interface, it is used as a factory for an object to expose, not directly as a
   bean instance that will be exposed itself.
- 
-  <p><b>NB: A bean that implements this interface cannot be used as a normal bean.</b>
+  NB: A bean that implements this interface cannot be used as a normal bean.
   A FactoryBean is defined in a bean style, but the object exposed for bean
   references ({@link #getObject()}) is always the object that it creates.
- 
-  <p>FactoryBeans can support singletons and prototypes, and can either create
+  FactoryBeans can support singletons and prototypes, and can either create
   objects lazily on demand or eagerly on startup. The {@link SmartFactoryBean}
   interface allows for exposing more fine-grained behavioral metadata.
- 
-  <p>This interface is heavily used within the framework itself, for example for
+  This interface is heavily used within the framework itself, for example for
   the AOP {@link org.springframework.aop.framework.ProxyFactoryBean} or the
   {@link org.springframework.jndi.JndiObjectFactoryBean}. It can be used for
   custom components as well; however, this is only common for infrastructure code.
- 
-  <p><b>{@code FactoryBean} is a programmatic contract. Implementations are not
-  supposed to rely on annotation-driven injection or other reflective facilities.</b>
+
+  {@code FactoryBean} is a programmatic contract. Implementations are not
+  supposed to rely on annotation-driven injection or other reflective facilities.
   {@link #getObjectType()} {@link #getObject()} invocations may arrive early in
   the bootstrap process, even ahead of any post-processor setup. If you need access
   other beans, implement {@link BeanFactoryAware} and obtain them programmatically.
  
-  <p>Finally, FactoryBean objects participate in the containing BeanFactory's
+  Finally, FactoryBean objects participate in the containing BeanFactory s
   synchronization of bean creation. There is usually no need for internal
   synchronization other than for purposes of lazy initialization within the
   FactoryBean itself (or the like).
@@ -237,18 +234,19 @@ package org.springframework.beans.factory;
   @see org.springframework.beans.factory.BeanFactory
   @see org.springframework.aop.framework.ProxyFactoryBean
   @see org.springframework.jndi.JndiObjectFactoryBean
- /
+*/
+
 public interface FactoryBean<T> {
 
-	/
+	/*
 	  Return an instance (possibly shared or independent) of the object
 	  managed by this factory.
-	  <p>As with a {@link BeanFactory}, this allows support for both the
+	  As with a {@link BeanFactory}, this allows support for both the
 	  Singleton and Prototype design pattern.
-	  <p>If this FactoryBean is not fully initialized yet at the time of
+	  If this FactoryBean is not fully initialized yet at the time of
 	  the call (for example because it is involved in a circular reference),
 	  throw a corresponding {@link FactoryBeanNotInitializedException}.
-	  <p>As of Spring 2.0, FactoryBeans are allowed to return {@code null}
+	  As of Spring 2.0, FactoryBeans are allowed to return {@code null}
 	  objects. The factory will consider this as normal value to be used; it
 	  will not throw a FactoryBeanNotInitializedException in this case anymore.
 	  FactoryBean implementations are encouraged to throw
@@ -256,31 +254,31 @@ public interface FactoryBean<T> {
 	  @return an instance of the bean (can be {@code null})
 	  @throws Exception in case of creation errors
 	  @see FactoryBeanNotInitializedException
-	 /
+	 */
 	T getObject() throws Exception;
 
-	/
+	/*
 	  Return the type of object that this FactoryBean creates,
 	  or {@code null} if not known in advance.
-	  <p>This allows one to check for specific types of beans without
+	  This allows one to check for specific types of beans without
 	  instantiating objects, for example on autowiring.
-	  <p>In the case of implementations that are creating a singleton object,
+	  In the case of implementations that are creating a singleton object,
 	  this method should try to avoid singleton creation as far as possible;
 	  it should rather estimate the type in advance.
 	  For prototypes, returning a meaningful type here is advisable too.
-	  <p>This method can be called <i>before</i> this FactoryBean has
+	  This method can be called <i>before</i> this FactoryBean has
 	  been fully initialized. It must not rely on state created during
 	  initialization; of course, it can still use such state if available.
-	  <p><b>NOTE:</b> Autowiring will simply ignore FactoryBeans that return
+	  NOTE:</b> Autowiring will simply ignore FactoryBeans that return
 	  {@code null} here. Therefore it is highly recommended to implement
 	  this method properly, using the current state of the FactoryBean.
 	  @return the type of object that this FactoryBean creates,
 	  or {@code null} if not known at the time of the call
 	  @see ListableBeanFactory#getBeansOfType
-	 /
+	 */
 	Class<?> getObjectType();
 
-	/
+	/*
 	  Is the object managed by this factory a singleton? That is,
 	  will {@link #getObject()} always return the same object
 	  (a reference that can be cached)?
@@ -302,7 +300,7 @@ public interface FactoryBean<T> {
 	  @return whether the exposed object is a singleton
 	  @see #getObject()
 	  @see SmartFactoryBean#isPrototype()
-	 /
+	 */
 	boolean isSingleton();
 
 }
