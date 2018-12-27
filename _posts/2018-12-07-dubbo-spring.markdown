@@ -10,9 +10,35 @@ tags:
 ---
 ### Spring Schema XML拓展机制：dubbo全透明融入spring的实现基础
 
-* 在spring项目中使用dubbo，一般由
-spring项目启动，会加载并解析resources目录下的xml，然后将xml配置文件中的配置加载成spring容器的bean。
-1. 如果是普通spring项目，则一般会在web.xml中指定需要加载的，如applicationContext.xml，如下：
+* 在spring项目启动，会加载并解析resources目录下的xml，然后将xml配置文件中的配置加载成spring容器的bean，dubbo需要定义dubbo_provider.xml或consumer_provider.xml并加入到applicationContext.xml中。
+
+```
+<?xml version="1.0"encoding="UTF-8"?>  
+<web-app id="WebApp_ID" version="2.4"xmlns="http://java.sun.com/xml/ns/j2ee"xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"xsi:schemaLocation="http://java.sun.com/xml/ns/j2eehttp://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">  
+    <context-param>  
+        <param-name>contextConfigLocation</param-name>  
+        <param-value>/WEB-INF/applicationContext.xml,/WEB-INF/controllers.xml,/WEB-INF/service.xml</param-value>  
+    </context-param> 
+    
+    <listener>  
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>  
+    </listener>  
+     
+    <servlet>  
+        <servlet-name>dispatch</servlet>  
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>  
+        <init-param>  
+            <param-name>contextConfigLocation</param-name>  
+            <param-value>/WEB-INF/applicationContext.xml</param-value>  
+        </init-param>  
+    </servlet>  
+    <servlet-mapping>  
+        <servlet-name>dispatch</servlet-name>  
+        <servlet-pattern>*.*</servlet-pattern>  
+    </servlet-mapping>  
+</web-app>  
+```
+如applicationContext.xml，如下：
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
