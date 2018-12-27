@@ -34,11 +34,11 @@ tags:
     </servlet>  
     <servlet-mapping>  
         <servlet-name>dispatch</servlet-name>  
-        <servlet-pattern>*.*</servlet-pattern>  
+        <servlet-pattern>.</servlet-pattern>  
     </servlet-mapping>  
 </web-app>  
 ```
-如applicationContext.xml，如下：
+applicationContext.xml，如下：
 
 ```
 <?xml version="1.0" encoding="UTF-8"?>
@@ -106,7 +106,7 @@ http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 @ImportResource({ "classpath:dubbo_consumer.xml","classpath:dubbo_provider.xml" })
 public class DubboConfig
 ```
-实现原理是：spring项目启动的时候，加载applicationContext.xml，然后加载dubbo的provider.xml，在加载provider.xml时，解析
+* 实现原理是：spring项目启动的时候，加载applicationContext.xml，然后加载dubbo的provider.xml，在加载provider.xml时，解析
 http://code.alibabatech.com/schema/dubbo，
 即dubbo的标签定义时，会使用dubbo jar包的
 dubbo-config-spring的META-INF的spring.handlers的配置：
@@ -160,37 +160,36 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 ```
 package org.springframework.beans.factory;
 
-/**
- * Interface to be implemented by beans that need to react once all their
- * properties have been set by a BeanFactory: for example, to perform custom
- * initialization, or merely to check that all mandatory properties have been set.
- *
- * <p>An alternative to implementing InitializingBean is specifying a custom
- * init-method, for example in an XML bean definition.
- * For a list of all bean lifecycle methods, see the BeanFactory javadocs.
- *
- * @author Rod Johnson
- * @see BeanNameAware
- * @see BeanFactoryAware
- * @see BeanFactory
- * @see org.springframework.beans.factory.support.RootBeanDefinition#getInitMethodName
- * @see org.springframework.context.ApplicationContextAware
- */
+/
+  Interface to be implemented by beans that need to react once all their
+  properties have been set by a BeanFactory: for example, to perform custom
+  initialization, or merely to check that all mandatory properties have been set.
+ 
+  <p>An alternative to implementing InitializingBean is specifying a custom
+  init-method, for example in an XML bean definition.
+  For a list of all bean lifecycle methods, see the BeanFactory javadocs.
+ 
+  @author Rod Johnson
+  @see BeanNameAware
+  @see BeanFactoryAware
+  @see BeanFactory
+  @see org.springframework.beans.factory.support.RootBeanDefinition#getInitMethodName
+  @see org.springframework.context.ApplicationContextAware
+ /
 public interface InitializingBean {
 
-	/**
-	 * Invoked by a BeanFactory after it has set all bean properties supplied
-	 * (and satisfied BeanFactoryAware and ApplicationContextAware).
-	 * <p>This method allows the bean instance to perform initialization only
-	 * possible when all bean properties have been set and to throw an
-	 * exception in the event of misconfiguration.
-	 * @throws Exception in the event of misconfiguration (such
-	 * as failure to set an essential property) or if initialization fails.
-	 */
+	/
+	  Invoked by a BeanFactory after it has set all bean properties supplied
+	  (and satisfied BeanFactoryAware and ApplicationContextAware).
+	  <p>This method allows the bean instance to perform initialization only
+	  possible when all bean properties have been set and to throw an
+	  exception in the event of misconfiguration.
+	  @throws Exception in the event of misconfiguration (such
+	  as failure to set an essential property) or if initialization fails.
+	 /
 	void afterPropertiesSet() throws Exception;
 
 }
-
 ```
 * 提供了一个afterPropertiesSet方法，在bean的所有属性通过Spring的beanFactory设值之后，可以在afterPropertiesSet方法中，自定义一些初始化操作，即
 
@@ -202,108 +201,108 @@ public interface InitializingBean {
 ```
 package org.springframework.beans.factory;
 
-/**
- * Interface to be implemented by objects used within a {@link BeanFactory} which
- * are themselves factories for individual objects. If a bean implements this
- * interface, it is used as a factory for an object to expose, not directly as a
- * bean instance that will be exposed itself.
- *
- * <p><b>NB: A bean that implements this interface cannot be used as a normal bean.</b>
- * A FactoryBean is defined in a bean style, but the object exposed for bean
- * references ({@link #getObject()}) is always the object that it creates.
- *
- * <p>FactoryBeans can support singletons and prototypes, and can either create
- * objects lazily on demand or eagerly on startup. The {@link SmartFactoryBean}
- * interface allows for exposing more fine-grained behavioral metadata.
- *
- * <p>This interface is heavily used within the framework itself, for example for
- * the AOP {@link org.springframework.aop.framework.ProxyFactoryBean} or the
- * {@link org.springframework.jndi.JndiObjectFactoryBean}. It can be used for
- * custom components as well; however, this is only common for infrastructure code.
- *
- * <p><b>{@code FactoryBean} is a programmatic contract. Implementations are not
- * supposed to rely on annotation-driven injection or other reflective facilities.</b>
- * {@link #getObjectType()} {@link #getObject()} invocations may arrive early in
- * the bootstrap process, even ahead of any post-processor setup. If you need access
- * other beans, implement {@link BeanFactoryAware} and obtain them programmatically.
- *
- * <p>Finally, FactoryBean objects participate in the containing BeanFactory's
- * synchronization of bean creation. There is usually no need for internal
- * synchronization other than for purposes of lazy initialization within the
- * FactoryBean itself (or the like).
- *
- * @author Rod Johnson
- * @author Juergen Hoeller
- * @since 08.03.2003
- * @see org.springframework.beans.factory.BeanFactory
- * @see org.springframework.aop.framework.ProxyFactoryBean
- * @see org.springframework.jndi.JndiObjectFactoryBean
- */
+/
+  Interface to be implemented by objects used within a {@link BeanFactory} which
+  are themselves factories for individual objects. If a bean implements this
+  interface, it is used as a factory for an object to expose, not directly as a
+  bean instance that will be exposed itself.
+ 
+  <p><b>NB: A bean that implements this interface cannot be used as a normal bean.</b>
+  A FactoryBean is defined in a bean style, but the object exposed for bean
+  references ({@link #getObject()}) is always the object that it creates.
+ 
+  <p>FactoryBeans can support singletons and prototypes, and can either create
+  objects lazily on demand or eagerly on startup. The {@link SmartFactoryBean}
+  interface allows for exposing more fine-grained behavioral metadata.
+ 
+  <p>This interface is heavily used within the framework itself, for example for
+  the AOP {@link org.springframework.aop.framework.ProxyFactoryBean} or the
+  {@link org.springframework.jndi.JndiObjectFactoryBean}. It can be used for
+  custom components as well; however, this is only common for infrastructure code.
+ 
+  <p><b>{@code FactoryBean} is a programmatic contract. Implementations are not
+  supposed to rely on annotation-driven injection or other reflective facilities.</b>
+  {@link #getObjectType()} {@link #getObject()} invocations may arrive early in
+  the bootstrap process, even ahead of any post-processor setup. If you need access
+  other beans, implement {@link BeanFactoryAware} and obtain them programmatically.
+ 
+  <p>Finally, FactoryBean objects participate in the containing BeanFactory's
+  synchronization of bean creation. There is usually no need for internal
+  synchronization other than for purposes of lazy initialization within the
+  FactoryBean itself (or the like).
+ 
+  @author Rod Johnson
+  @author Juergen Hoeller
+  @since 08.03.2003
+  @see org.springframework.beans.factory.BeanFactory
+  @see org.springframework.aop.framework.ProxyFactoryBean
+  @see org.springframework.jndi.JndiObjectFactoryBean
+ /
 public interface FactoryBean<T> {
 
-	/**
-	 * Return an instance (possibly shared or independent) of the object
-	 * managed by this factory.
-	 * <p>As with a {@link BeanFactory}, this allows support for both the
-	 * Singleton and Prototype design pattern.
-	 * <p>If this FactoryBean is not fully initialized yet at the time of
-	 * the call (for example because it is involved in a circular reference),
-	 * throw a corresponding {@link FactoryBeanNotInitializedException}.
-	 * <p>As of Spring 2.0, FactoryBeans are allowed to return {@code null}
-	 * objects. The factory will consider this as normal value to be used; it
-	 * will not throw a FactoryBeanNotInitializedException in this case anymore.
-	 * FactoryBean implementations are encouraged to throw
-	 * FactoryBeanNotInitializedException themselves now, as appropriate.
-	 * @return an instance of the bean (can be {@code null})
-	 * @throws Exception in case of creation errors
-	 * @see FactoryBeanNotInitializedException
-	 */
+	/
+	  Return an instance (possibly shared or independent) of the object
+	  managed by this factory.
+	  <p>As with a {@link BeanFactory}, this allows support for both the
+	  Singleton and Prototype design pattern.
+	  <p>If this FactoryBean is not fully initialized yet at the time of
+	  the call (for example because it is involved in a circular reference),
+	  throw a corresponding {@link FactoryBeanNotInitializedException}.
+	  <p>As of Spring 2.0, FactoryBeans are allowed to return {@code null}
+	  objects. The factory will consider this as normal value to be used; it
+	  will not throw a FactoryBeanNotInitializedException in this case anymore.
+	  FactoryBean implementations are encouraged to throw
+	  FactoryBeanNotInitializedException themselves now, as appropriate.
+	  @return an instance of the bean (can be {@code null})
+	  @throws Exception in case of creation errors
+	  @see FactoryBeanNotInitializedException
+	 /
 	T getObject() throws Exception;
 
-	/**
-	 * Return the type of object that this FactoryBean creates,
-	 * or {@code null} if not known in advance.
-	 * <p>This allows one to check for specific types of beans without
-	 * instantiating objects, for example on autowiring.
-	 * <p>In the case of implementations that are creating a singleton object,
-	 * this method should try to avoid singleton creation as far as possible;
-	 * it should rather estimate the type in advance.
-	 * For prototypes, returning a meaningful type here is advisable too.
-	 * <p>This method can be called <i>before</i> this FactoryBean has
-	 * been fully initialized. It must not rely on state created during
-	 * initialization; of course, it can still use such state if available.
-	 * <p><b>NOTE:</b> Autowiring will simply ignore FactoryBeans that return
-	 * {@code null} here. Therefore it is highly recommended to implement
-	 * this method properly, using the current state of the FactoryBean.
-	 * @return the type of object that this FactoryBean creates,
-	 * or {@code null} if not known at the time of the call
-	 * @see ListableBeanFactory#getBeansOfType
-	 */
+	/
+	  Return the type of object that this FactoryBean creates,
+	  or {@code null} if not known in advance.
+	  <p>This allows one to check for specific types of beans without
+	  instantiating objects, for example on autowiring.
+	  <p>In the case of implementations that are creating a singleton object,
+	  this method should try to avoid singleton creation as far as possible;
+	  it should rather estimate the type in advance.
+	  For prototypes, returning a meaningful type here is advisable too.
+	  <p>This method can be called <i>before</i> this FactoryBean has
+	  been fully initialized. It must not rely on state created during
+	  initialization; of course, it can still use such state if available.
+	  <p><b>NOTE:</b> Autowiring will simply ignore FactoryBeans that return
+	  {@code null} here. Therefore it is highly recommended to implement
+	  this method properly, using the current state of the FactoryBean.
+	  @return the type of object that this FactoryBean creates,
+	  or {@code null} if not known at the time of the call
+	  @see ListableBeanFactory#getBeansOfType
+	 /
 	Class<?> getObjectType();
 
-	/**
-	 * Is the object managed by this factory a singleton? That is,
-	 * will {@link #getObject()} always return the same object
-	 * (a reference that can be cached)?
-	 * <p><b>NOTE:</b> If a FactoryBean indicates to hold a singleton object,
-	 * the object returned from {@code getObject()} might get cached
-	 * by the owning BeanFactory. Hence, do not return {@code true}
-	 * unless the FactoryBean always exposes the same reference.
-	 * <p>The singleton status of the FactoryBean itself will generally
-	 * be provided by the owning BeanFactory; usually, it has to be
-	 * defined as singleton there.
-	 * <p><b>NOTE:</b> This method returning {@code false} does not
-	 * necessarily indicate that returned objects are independent instances.
-	 * An implementation of the extended {@link SmartFactoryBean} interface
-	 * may explicitly indicate independent instances through its
-	 * {@link SmartFactoryBean#isPrototype()} method. Plain {@link FactoryBean}
-	 * implementations which do not implement this extended interface are
-	 * simply assumed to always return independent instances if the
-	 * {@code isSingleton()} implementation returns {@code false}.
-	 * @return whether the exposed object is a singleton
-	 * @see #getObject()
-	 * @see SmartFactoryBean#isPrototype()
-	 */
+	/
+	  Is the object managed by this factory a singleton? That is,
+	  will {@link #getObject()} always return the same object
+	  (a reference that can be cached)?
+	  <p><b>NOTE:</b> If a FactoryBean indicates to hold a singleton object,
+	  the object returned from {@code getObject()} might get cached
+	  by the owning BeanFactory. Hence, do not return {@code true}
+	  unless the FactoryBean always exposes the same reference.
+	  <p>The singleton status of the FactoryBean itself will generally
+	  be provided by the owning BeanFactory; usually, it has to be
+	  defined as singleton there.
+	  <p><b>NOTE:</b> This method returning {@code false} does not
+	  necessarily indicate that returned objects are independent instances.
+	  An implementation of the extended {@link SmartFactoryBean} interface
+	  may explicitly indicate independent instances through its
+	  {@link SmartFactoryBean#isPrototype()} method. Plain {@link FactoryBean}
+	  implementations which do not implement this extended interface are
+	  simply assumed to always return independent instances if the
+	  {@code isSingleton()} implementation returns {@code false}.
+	  @return whether the exposed object is a singleton
+	  @see #getObject()
+	  @see SmartFactoryBean#isPrototype()
+	 /
 	boolean isSingleton();
 
 }
@@ -315,33 +314,33 @@ public interface FactoryBean<T> {
 2. 为了之后客户端调用的性能考虑，在spring启动时，dubbo提前初始化好refer代理，之后spring容器获取该bean，如在BeanFactory调用getBean方法时，getObject可以直接返回refer代理了，而不是等到调用时再初始化生成refer代理。提前初始化refer的具体实现为在InitializingBean的afterPropertiesSet的方法中调用getObject，getObject最终会调用com.alibaba.dubbo.config.ReferenceConfig#get方法完成远程服务调用代理类的创建。
 
 * ServiceBean：没有实现FactoryBean接口，原因是服务端的Service bean就是提高功能的bean了，就跟用@Service描述的bean一样，所以spring就按照正常流程，使用spring内置的FactoryBean接口创建即可。但是由于是rpc服务，跟其他service不一样的是，需要注册到注册中心，并且开启监听端口，监听客户端的连接请求，故需要实现InitializingBean接口，在Service bean的属性设置好之后，在InitializingBean的afterPropertiesSet方法中，调用com.alibaba.dubbo.config.ServiceConfig#export方法进行服务暴露。
-* 更多关于FactoryBean可以看：https://www.cnblogs.com/davidwang456/p/3688250.html
+ 更多关于FactoryBean可以看：https://www.cnblogs.com/davidwang456/p/3688250.html
 
 #### DisposableBean：自定义spring容器管理的单实例bean的销毁操作
 ```
-/**
- * Interface to be implemented by beans that want to release resources
- * on destruction. A BeanFactory is supposed to invoke the destroy
- * method if it disposes a cached singleton. An application context
- * is supposed to dispose all of its singletons on close.
- *
- * <p>An alternative to implementing DisposableBean is specifying a custom
- * destroy-method, for example in an XML bean definition.
- * For a list of all bean lifecycle methods, see the BeanFactory javadocs.
- *
- * @author Juergen Hoeller
- * @since 12.08.2003
- * @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
- * @see org.springframework.context.ConfigurableApplicationContext#close
- */
+/
+  Interface to be implemented by beans that want to release resources
+  on destruction. A BeanFactory is supposed to invoke the destroy
+  method if it disposes a cached singleton. An application context
+  is supposed to dispose all of its singletons on close.
+ 
+  <p>An alternative to implementing DisposableBean is specifying a custom
+  destroy-method, for example in an XML bean definition.
+  For a list of all bean lifecycle methods, see the BeanFactory javadocs.
+ 
+  @author Juergen Hoeller
+  @since 12.08.2003
+  @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
+  @see org.springframework.context.ConfigurableApplicationContext#close
+ /
 public interface DisposableBean {
 
-	/**
-	 * Invoked by a BeanFactory on destruction of a singleton.
-	 * @throws Exception in case of shutdown errors.
-	 * Exceptions will get logged but not rethrown to allow
-	 * other beans to release their resources too.
-	 */
+	/
+	  Invoked by a BeanFactory on destruction of a singleton.
+	  @throws Exception in case of shutdown errors.
+	  Exceptions will get logged but not rethrown to allow
+	  other beans to release their resources too.
+	 /
 	void destroy() throws Exception;
 
 }
@@ -358,15 +357,15 @@ public void destroy() throws Exception {
     //unexport();
 }
 ```
-ServiceBean的bean的释放最初设计是通过destroy方法来unexport的，后来被spring孵化后，是通过添加spring的关闭钩子shutdown hook来做的，不在destroy方法中执行（如上代码unexport()注释掉了），如下为spring的shutdown hook：
+ServiceBean的bean的释放最初设计是通过destroy方法来unexport的，后来被apache孵化后，是通过添加spring的关闭钩子shutdown hook来做的，不在destroy方法中执行（如上代码unexport()注释掉了），如下为spring的shutdown hook：
 
 ```
-/**
- * The shutdown hook thread to do the clean up stuff.
- * This is a singleton in order to ensure there is only one shutdown hook registered.
- * Because {@link ApplicationShutdownHooks} use {@link java.util.IdentityHashMap}
- * to store the shutdown hooks.
- */
+/
+  The shutdown hook thread to do the clean up stuff.
+  This is a singleton in order to ensure there is only one shutdown hook registered.
+  Because {@link ApplicationShutdownHooks} use {@link java.util.IdentityHashMap}
+  to store the shutdown hooks.
+ /
 public class DubboShutdownHook extends Thread {
 
     private static final Logger logger = LoggerFactory.getLogger(DubboShutdownHook.class);
@@ -377,9 +376,9 @@ public class DubboShutdownHook extends Thread {
         return dubboShutdownHook;
     }
 
-    /**
-     * Has it already been destroyed or not?
-     */
+    /
+      Has it already been destroyed or not?
+     /
     private final AtomicBoolean destroyed;
 
     private DubboShutdownHook(String name) {
@@ -395,9 +394,9 @@ public class DubboShutdownHook extends Thread {
         destroyAll();
     }
 
-    /**
-     * Destroy all the resources, including registries and protocols.
-     */
+    /
+      Destroy all the resources, including registries and protocols.
+     /
     public void destroyAll() {
         if (!destroyed.compareAndSet(false, true)) {
             return;
@@ -408,9 +407,9 @@ public class DubboShutdownHook extends Thread {
         destroyProtocols();
     }
 
-    /**
-     * Destroy all the protocols.
-     */
+    /
+      Destroy all the protocols.
+     /
     private void destroyProtocols() {
         ExtensionLoader<Protocol> loader = ExtensionLoader.getExtensionLoader(Protocol.class);
         for (String protocolName : loader.getLoadedExtensions()) {
@@ -430,10 +429,10 @@ public class DubboShutdownHook extends Thread {
 DubboShutdownHook是在DubboBootstrap中注册的：
 
 ```
-/**
- * A bootstrap class to easily start and stop Dubbo via programmatic API.
- * The bootstrap class will be responsible to cleanup the resources during stop.
- */
+/
+  A bootstrap class to easily start and stop Dubbo via programmatic API.
+  The bootstrap class will be responsible to cleanup the resources during stop.
+ /
 public class DubboBootstrap
 核心方法：
 public void start() {
@@ -459,16 +458,16 @@ public void stop() {
     }
 }
 
-/**
- * Register the shutdown hook
- */
+/
+  Register the shutdown hook
+ /
 public void registerShutdownHook() {
     Runtime.getRuntime().addShutdownHook(shutdownHook);
 }
 
-/**
- * Remove this shutdown hook
- */
+/
+  Remove this shutdown hook
+ /
 public void removeShutdownHook() {
     try {
         Runtime.getRuntime().removeShutdownHook(shutdownHook);
@@ -508,17 +507,17 @@ dubbo-config-spring下的web-fragment.xml
 DubboApplicationContextInitializer和DubboApplicationListener：
 
 ```
-/**
- * Automatically register {@link DubboApplicationListener} to Spring context
- * A {@link org.springframework.web.context.ContextLoaderListener} class is defined in
- * src/main/resources/META-INF/web-fragment.xml
- * In the web-fragment.xml, {@link DubboApplicationContextInitializer} is defined in context params.
- * This file will be discovered if running under a servlet 3.0+ container.
- * Even if user specifies {@link org.springframework.web.context.ContextLoaderListener} in web.xml,
- * it will be merged to web.xml.
- * If user specifies <metadata-complete="true" /> in web.xml, this will no take effect,
- * unless user configures {@link DubboApplicationContextInitializer} explicitly in web.xml.
- */
+/
+  Automatically register {@link DubboApplicationListener} to Spring context
+  A {@link org.springframework.web.context.ContextLoaderListener} class is defined in
+  src/main/resources/META-INF/web-fragment.xml
+  In the web-fragment.xml, {@link DubboApplicationContextInitializer} is defined in context params.
+  This file will be discovered if running under a servlet 3.0+ container.
+  Even if user specifies {@link org.springframework.web.context.ContextLoaderListener} in web.xml,
+  it will be merged to web.xml.
+  If user specifies <metadata-complete="true" /> in web.xml, this will no take effect,
+  unless user configures {@link DubboApplicationContextInitializer} explicitly in web.xml.
+ /
 public class DubboApplicationContextInitializer implements ApplicationContextInitializer {
 
     @Override
@@ -527,10 +526,10 @@ public class DubboApplicationContextInitializer implements ApplicationContextIni
     }
 }
 
-/**
- * An application listener that listens the ContextClosedEvent.
- * Upon the event, this listener will do the necessary clean up to avoid memory leak.
- */
+/
+  An application listener that listens the ContextClosedEvent.
+  Upon the event, this listener will do the necessary clean up to avoid memory leak.
+ /
 public class DubboApplicationListener implements ApplicationListener<ApplicationEvent> {
 
     private DubboBootstrap dubboBootstrap;
@@ -579,53 +578,53 @@ public synchronized void destroy() {
 * 观察者设计模式的一种实现，bean可以实现这个接口，并通过指定泛型的实际类型，即ApplicationEvent的实现类，来监听spring容器产生的特定事件，在onApplicationEvent方法中，自定义实现对该特定事件的响应和处理逻辑。
 
 ```
-/**
- * Interface to be implemented by application event listeners.
- * Based on the standard {@code java.util.EventListener} interface
- * for the Observer design pattern.
- *
- * <p>As of Spring 3.0, an ApplicationListener can generically declare the event type
- * that it is interested in. When registered with a Spring ApplicationContext, events
- * will be filtered accordingly, with the listener getting invoked for matching event
- * objects only.
- *
- * @author Rod Johnson
- * @author Juergen Hoeller
- * @param <E> the specific ApplicationEvent subclass to listen to
- * @see org.springframework.context.event.ApplicationEventMulticaster
- */
+/
+  Interface to be implemented by application event listeners.
+  Based on the standard {@code java.util.EventListener} interface
+  for the Observer design pattern.
+ 
+  <p>As of Spring 3.0, an ApplicationListener can generically declare the event type
+  that it is interested in. When registered with a Spring ApplicationContext, events
+  will be filtered accordingly, with the listener getting invoked for matching event
+  objects only.
+ 
+  @author Rod Johnson
+  @author Juergen Hoeller
+  @param <E> the specific ApplicationEvent subclass to listen to
+  @see org.springframework.context.event.ApplicationEventMulticaster
+ /
 public interface ApplicationListener<E extends ApplicationEvent> extends EventListener {
 
-	/**
-	 * Handle an application event.
-	 * @param event the event to respond to
-	 */
+	/
+	  Handle an application event.
+	  @param event the event to respond to
+	 /
 	void onApplicationEvent(E event);
 
 }
 
-/**
- * Event raised when an {@code ApplicationContext} gets initialized or refreshed.
- *
- * @author Juergen Hoeller
- * @since 04.03.2003
- * @see ContextClosedEvent
- */
+/
+  Event raised when an {@code ApplicationContext} gets initialized or refreshed.
+ 
+  @author Juergen Hoeller
+  @since 04.03.2003
+  @see ContextClosedEvent
+ /
 @SuppressWarnings("serial")
 public class ContextRefreshedEvent extends ApplicationContextEvent {
 
-	/**
-	 * Create a new ContextRefreshedEvent.
-	 * @param source the {@code ApplicationContext} that has been initialized
-	 * or refreshed (must not be {@code null})
-	 */
+	/
+	  Create a new ContextRefreshedEvent.
+	  @param source the {@code ApplicationContext} that has been initialized
+	  or refreshed (must not be {@code null})
+	 /
 	public ContextRefreshedEvent(ApplicationContext source) {
 		super(source);
 	}
 
 }
 ```
-* ServiceBean：实现这个接口，并注册ContextRefreshedEvent事件。ContextRefreshedEvent是在spring容器初始化或者刷新时，产生的事件。ServiceBean对该事件的处理是，执行export导出服务，export方法保证了只导出和注册一次，是可以重复调用的。
+ ServiceBean：实现这个接口，并注册ContextRefreshedEvent事件。ContextRefreshedEvent是在spring容器初始化或者刷新时，产生的事件。ServiceBean对该事件的处理是，执行export导出服务，export方法保证了只导出和注册一次，是可以重复调用的。
 
 ```
 @Override
@@ -670,58 +669,58 @@ public synchronized void export() {
 bean实现这个接口，并在setApplicationContext方法中自定义该bean需要通过ApplicationContext做什么东西。setApplicationContext方法会在bean的属性赋值完成，但在初始化callback调用之前，如InitializingBean的afterPropertiesSet，调用之前，调用。
 
 ```
-/**
- * Interface to be implemented by any object that wishes to be notified
- * of the {@link ApplicationContext} that it runs in.
- *
- * <p>Implementing this interface makes sense for example when an object
- * requires access to a set of collaborating beans. Note that configuration
- * via bean references is preferable to implementing this interface just
- * for bean lookup purposes.
- *
- * <p>This interface can also be implemented if an object needs access to file
- * resources, i.e. wants to call {@code getResource}, wants to publish
- * an application event, or requires access to the MessageSource. However,
- * it is preferable to implement the more specific {@link ResourceLoaderAware},
- * {@link ApplicationEventPublisherAware} or {@link MessageSourceAware} interface
- * in such a specific scenario.
- *
- * <p>Note that file resource dependencies can also be exposed as bean properties
- * of type {@link org.springframework.core.io.Resource}, populated via Strings
- * with automatic type conversion by the bean factory. This removes the need
- * for implementing any callback interface just for the purpose of accessing
- * a specific file resource.
- *
- * <p>{@link org.springframework.context.support.ApplicationObjectSupport} is a
- * convenience base class for application objects, implementing this interface.
- *
- * <p>For a list of all bean lifecycle methods, see the
- * {@link org.springframework.beans.factory.BeanFactory BeanFactory javadocs}.
- *
- * @author Rod Johnson
- * @author Juergen Hoeller
- * @author Chris Beams
- * @see ResourceLoaderAware
- * @see ApplicationEventPublisherAware
- * @see MessageSourceAware
- * @see org.springframework.context.support.ApplicationObjectSupport
- * @see org.springframework.beans.factory.BeanFactoryAware
- */
+/
+  Interface to be implemented by any object that wishes to be notified
+  of the {@link ApplicationContext} that it runs in.
+ 
+  <p>Implementing this interface makes sense for example when an object
+  requires access to a set of collaborating beans. Note that configuration
+  via bean references is preferable to implementing this interface just
+  for bean lookup purposes.
+ 
+  <p>This interface can also be implemented if an object needs access to file
+  resources, i.e. wants to call {@code getResource}, wants to publish
+  an application event, or requires access to the MessageSource. However,
+  it is preferable to implement the more specific {@link ResourceLoaderAware},
+  {@link ApplicationEventPublisherAware} or {@link MessageSourceAware} interface
+  in such a specific scenario.
+ 
+  <p>Note that file resource dependencies can also be exposed as bean properties
+  of type {@link org.springframework.core.io.Resource}, populated via Strings
+  with automatic type conversion by the bean factory. This removes the need
+  for implementing any callback interface just for the purpose of accessing
+  a specific file resource.
+ 
+  <p>{@link org.springframework.context.support.ApplicationObjectSupport} is a
+  convenience base class for application objects, implementing this interface.
+ 
+  <p>For a list of all bean lifecycle methods, see the
+  {@link org.springframework.beans.factory.BeanFactory BeanFactory javadocs}.
+ 
+  @author Rod Johnson
+  @author Juergen Hoeller
+  @author Chris Beams
+  @see ResourceLoaderAware
+  @see ApplicationEventPublisherAware
+  @see MessageSourceAware
+  @see org.springframework.context.support.ApplicationObjectSupport
+  @see org.springframework.beans.factory.BeanFactoryAware
+ /
 public interface ApplicationContextAware extends Aware {
 
-	/**
-	 * Set the ApplicationContext that this object runs in.
-	 * Normally this call will be used to initialize the object.
-	 * <p>Invoked after population of normal bean properties but before an init callback such
-	 * as {@link org.springframework.beans.factory.InitializingBean#afterPropertiesSet()}
-	 * or a custom init-method. Invoked after {@link ResourceLoaderAware#setResourceLoader},
-	 * {@link ApplicationEventPublisherAware#setApplicationEventPublisher} and
-	 * {@link MessageSourceAware}, if applicable.
-	 * @param applicationContext the ApplicationContext object to be used by this object
-	 * @throws ApplicationContextException in case of context initialization errors
-	 * @throws BeansException if thrown by application context methods
-	 * @see org.springframework.beans.factory.BeanInitializationException
-	 */
+	/
+	  Set the ApplicationContext that this object runs in.
+	  Normally this call will be used to initialize the object.
+	  <p>Invoked after population of normal bean properties but before an init callback such
+	  as {@link org.springframework.beans.factory.InitializingBean#afterPropertiesSet()}
+	  or a custom init-method. Invoked after {@link ResourceLoaderAware#setResourceLoader},
+	  {@link ApplicationEventPublisherAware#setApplicationEventPublisher} and
+	  {@link MessageSourceAware}, if applicable.
+	  @param applicationContext the ApplicationContext object to be used by this object
+	  @throws ApplicationContextException in case of context initialization errors
+	  @throws BeansException if thrown by application context methods
+	  @see org.springframework.beans.factory.BeanInitializationException
+	 /
 	void setApplicationContext(ApplicationContext applicationContext) throws BeansException;
 
 }
