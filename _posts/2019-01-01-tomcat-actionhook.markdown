@@ -17,10 +17,10 @@ tags:
 4. ActionHook通过ActionCode机制来进行实际的回调处理。
 
 ### 案例：DefaultServlet
-1. 静态资源的请求一般通过DefaultServlet来处理。如下为doGet调用的serveResource来进行资源获取和响应：
+(1) 静态资源的请求一般通过DefaultServlet来处理。如下为doGet调用的serveResource来进行资源获取和响应：
 
 ```
- /**
+/**
  * Serve the specified resource, optionally including the data content.
  *
  * @param request  The servlet request we are processing
@@ -37,10 +37,11 @@ protected void serveResource(HttpServletRequest request,
                              boolean content,
                              String encoding)
     throws IOException, ServletException {
-}    
+} 
 ```
 
-2. serveResource底层会调用copyRange来将数据写出：具体为ostream.write，其中ostream的实现为connector包的CoyoteOutputStream。ostream是从connector包的Response创建的。
+(2) serveResource底层会调用copyRange来将数据写出：具体为ostream.write，其中ostream的实现为connector包的CoyoteOutputStream。ostream是从connector包的Response创建的。
+
 ```
 protected IOException copyRange(InputStream istream,
                                   ServletOutputStream ostream,
@@ -70,7 +71,7 @@ protected IOException copyRange(InputStream istream,
 
 }
 ```
-3. CoyoteOutputStream的write方法实现：底层调用基类OutputBuffer的write，一直往下最终则是调用了coyote的Response的doWrite。此时在代码结构层面，则是完成了connector包到coyote包的过渡。
+(3) CoyoteOutputStream的write方法实现：底层调用基类OutputBuffer的write，一直往下最终则是调用了coyote的Response的doWrite。此时在代码结构层面，则是完成了connector包到coyote包的过渡。
 
 ```
 @Override
@@ -89,7 +90,7 @@ public void write(byte[] b, int off, int len) throws IOException {
 }
 ```
 
-4. coyote的Response的doWrite，doWrite最终调用的是coyote的OutPutBuffer的doWrite：
+(4). coyote的Response的doWrite，doWrite最终调用的是coyote的OutPutBuffer的doWrite：
 
 ```
 /**
@@ -105,7 +106,7 @@ public void doWrite(ByteBuffer chunk) throws IOException {
     contentWritten += len - chunk.remaining();
 }
 ```
-5. coyote的OutputBuffer则是根据具体的应用层协议来实现doWrite，以下为Http11OutputBuffer的实现：
+(5) coyote的OutputBuffer则是根据具体的应用层协议来实现doWrite，以下为Http11OutputBuffer的实现：
 
 ```
 @Override
@@ -126,7 +127,7 @@ public int doWrite(ByteBuffer chunk) throws IOException {
 }
 ```
 
-6. 由5可知:
+(6) 由(5)可知:
 * 先调用了repsonse.action(ActionCode.COMMIT, null)，这个地方就是调用了ActionHook接口的action回调方法了，作用是如注释所示：对response的http报文的 header进行检查和设值，而这个是跟应用层协议相关的，故需要回到coyote包的ProtocolHandler的Processor这边来处理；以及添加相关过滤器OutputFilter，如压缩GzipOutputFilter。此处为Http11Processor提供了ActionHook的action的实现。
 
 * 处理完成之后，则直接写出到socket或者如果有OutputFilter，则交个filter过滤器链处理完之后在写出到socket。此处为通过Http11OutputBuffer的内部类SocketOutputBuffer来完成到socket的写出。
