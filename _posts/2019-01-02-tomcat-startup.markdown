@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Tomcat源码分析（二）：启动流程和webapp目录应用部署实现"
+title:      "Tomcat源码分析（二）：容器启动流程和webapp目录下ServletContext应用加载"
 subtitle:   "Tomcat Startup"
 date:       2019-01-02 08:12:00
 author:     "XYZ"
@@ -11,7 +11,8 @@ tags:
 
 ### 启动脚本
 * tomcat的启动和关闭分别是通过执行bin目录下的startup.sh和shutdown.sh来实现的，而startup.sh和shutdown.sh里面会执行catalina.sh来完成实际的启动和关闭。在catalina.sh里面会获取或设置启动相关的环境变量，然后配置启动的各种参数，如下为启动脚本：可以看到是执行Bootstrap类。
-```
+
+```bash
 touch "$CATALINA_OUT"
 if [ "$1" = "-security" ] ; then
   if [ $have_tty -eq 1 ]; then
@@ -43,7 +44,8 @@ fi
 * Bootstrap类在加载时，会初始化类加载器体系，主要是commonLoader，catalinaLoader，sharedLoader这三个类加载器（默认为同一个），并使用catalinaLoader来通过放射的方式加载和创建org.apache.catalina.startup.Catalina实现，最后在main方法中，根据脚本执行参数来执行启动或停止。其中启动start时，依次调用Catalina的load和start：
    1. load为加载解析conf/server.xml文件并创建StandardServer，StanderService，StandardHost对象实例，即只要server.xml中存在这些节点，则会创建对应的Container接口的实现类对象实例；
    2. start为从StanderServer开始整个Catalina容器的启动。
-```
+
+```java
 类加载器：
 ClassLoader commonLoader = null;
 ClassLoader catalinaLoader = null;
@@ -75,12 +77,12 @@ if (null == daemon.getServer()) {
 }
 ```
 
-### 启动流程
+### 容器启动流程
 #### server.xml文件解析
 * tomcat中对xml配置文件的解析是通过Digester来完成的。xml文件的解析一般有Dom4j和SAX两种方式组成，其中Dom4j为在内存中构建一棵Dom树来解析的，而SAX则是读取输入流，然后在读到某个xml节点时，触发相应的节点事件并回调相应的处理方法来实现的。而Digester在SAX的基础上，进行了封装，使得更加方便使用，目前Digester已经是一个Apache commons子项目：[Digester](http://commons.apache.org/proper/commons-digester/)
 * Catalina的load方法的核心实现：
 
-```
+```java
 public void load() {
        // 创建digester实例，定义xml节点的解析规则
        // Create and execute our Digester
@@ -116,7 +118,8 @@ public void load() {
    1. 简单节点解析规则定义：以Server节点为例
 		
 		第一步：
-		```
+
+		```java
 		// public void addObjectCreate(String pattern, String className, String attributeName)
 		// pattern：匹配到Server节点
 		// className：Server节点默认对应的tomcat的类
@@ -126,14 +129,16 @@ public void load() {
 		                                 "org.apache.catalina.core.StandardServer",
 		                                 "className");
 		 ```
-		第二步：       
-		```
+		第二步：   
+
+		```java
 		// public void addSetProperties(String pattern)
 		// pattern：读取Server节点的所有节点属性值，然后填充到org.apache.catalina.core.StandardServer的属性中
 		digester.addSetProperties("Server");
 		```
 		第三步：
-	  ```	 
+
+	  ```java	 
 		// public void addSetNext(String pattern, String methodName, String paramType)
 		// pattern：匹配到Server节点
 		// methodName：调用创建了StandardServer实例的parent类的setServer方法，
@@ -145,7 +150,8 @@ public void load() {
 		                    "org.apache.catalina.Server");
 		```
    2. 复杂节点解析规则定义：通过Rule来定义复杂节点，即节点里面还包含多级节点。addRuleSet方法和addRule，其中addRule为具体添加一条解析规则。
-		```
+
+		```java
 		// Add RuleSets for nested elements
 		digester.addRuleSet(new NamingRuleSet("Server/GlobalNamingResources/"));
 		digester.addRuleSet(new EngineRuleSet("Server/Service/"));
@@ -155,7 +161,8 @@ public void load() {
 		digester.addRuleSet(new NamingRuleSet("Server/Service/Engine/Host/Context/"));
 		```
    3. HostRuleSet：定义Host节点的解析和创建Host对象实例的规则，其中addRule为该pattern匹配到的节点，在这里是Server/Service/Engine/Host，定义一条具体的解析规则，多次调用则定义多条规则，规则接口为Rule，在Rule节点的begin方法中定义具体的回调方法。
-		```
+
+		```java
 		public void addRuleInstances(Digester digester) {
 		    digester.addObjectCreate(prefix + "Host",
 		                             "org.apache.catalina.core.StandardHost",
@@ -177,7 +184,8 @@ public void load() {
 		}
 		```
   4. LifecycleListenerRule：添加监听器Listener，构造函数如下。上面那个addRule的listenerClass为：org.apache.catalina.startup.HostConfig，attributeName为：hostConfigClass，即为StanderHost对象添加了一个HostConfig到Listener列表，其中HostConfig是一个LifeCycleListener。
-		```
+
+		```java
 		/**
 		 * Construct a new instance of this Rule.
 		 * @param listenerClass Default name of the LifecycleListener
@@ -211,11 +219,12 @@ public void load() {
 		```
 
    
-#### listener事件监听机制完成Container接口组件的创建
+#### LifeCycleListener事件监听机制完成各子容器的配置解析和创建
 * 由上分析可知在Host节点对应的StanderHost类的生命周期监听器LifeCycleListener列表，添加了一个org.apache.catalina.startup.HostConfig监听器实现。
 * 在Catalina体系的核心组件的生命周期是通过LifeCycle来管理的，即初始化，启动，停止都对应相关的状态和listener事件产生，并交给相应的监听器Listener处理。对于核心组件Host，Context的启动，分别是交给org.apache.catalina.startup包的HostConfig和ContextConfig来完成的。
 1. StandardHost启动实现：startInternal
-```
+
+```java
 代码1：
 protected synchronized void startInternal() throws LifecycleException {
     ... 
@@ -245,7 +254,7 @@ protected void fireLifecycleEvent(String type, Object data) {
 
 2. HostConfig的lifecycleEvent方法处理Lifecycle.START_EVENT：调用deployApps方法部署webapp目录的应用。底层实现主要为遍历docBase指定的目录，默认为webapp，然后对每个xxx.war文件，创建一个StandardContext实例，即一个应用，并添加到StandardHost的children列表中。注意这里并不进行web.xm文件的解析，只是如果在xxx.war包内存在META-INF/context.xml文件，则解析并用来填充这个StandardContext的属性。
 
-```
+```java
 /**
  * Process a "start" event for this Host.
  */
@@ -275,9 +284,10 @@ context.setWebappVersion(cn.getVersion());
 context.setDocBase(cn.getBaseName() + ".war");
 host.addChild(context);
 ```
-#### webapp目录应用部署
+#### webapp目录下ServletContext应用：加载与配置解析
 * 由上可知，HostConfig底层调用deployWAR方法来遍历webapp目录，并解压war包，解析META-INF/context.xml文件，创建StandardContext对象，然后加到StandardHost的children，即子容器列表。之后在StandardHost的startInternal中遍历已经填充好的children，调用StandardContext的start方法，从而对每个Context进行启动，初始化机制也是跟StandardHost一样，使用listener事件监听机制来完成实际创建，具体为交给ContextConfig。
-```
+
+```java
 // Notify our interested LifecycleListeners
 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
@@ -291,14 +301,15 @@ fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
 * ContextConfig：与HostConfig类似，不过是在StandardContext的startInternal方法，触发ContextConfig的lifecycleEvent方法：
 
-```
+```java
 StandardContext的startInternal：
 // Notify our interested LifecycleListeners
 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 ```
 
 * ContextConfig底层调用configureStart来启动应用，核心方法为webConfig。
-```
+
+```java
 /**
   * Process a "contextConfig" event for this Context.
   */
@@ -333,4 +344,4 @@ fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
  }
 ```
 * webConfig：是tomcat非常重要的一个方法，主要是根据servlet规范，解析web.xml，以及合并包含的jar包里面的web-fragment.xml文件到web.xml，获取注解信息等等工作，完成对应java servlet的ServletContext的创建，代表一个应用的配置和启动。具体在下一篇文章分析。
-[Tomcat源码分析：web.xml解析与JavaConfig实现基础ServletContainerInitializer的处理](https://blog.csdn.net/u010013573/article/details/86417019)
+[Tomcat源码分析（三）：ServletContext应用启动之配置解析](https://blog.csdn.net/u010013573/article/details/86417019)

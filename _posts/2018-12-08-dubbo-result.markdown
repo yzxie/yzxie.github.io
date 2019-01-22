@@ -8,7 +8,7 @@ header-img: "img/article-bg1.jpg"
 tags:
     - Dubbo源码分析
 ---
-### 并发调用下结果获取的原理
+### RPC并发调用的结果获取原理
 * Dubbo协议在客户端针对每个Service调用，默认是使用单一Netty长连接来处理RPC调用请求的，而在客户端，如在web环境中，任何一个时刻，可能存在多个线程并发对该Service进行并发调用，这些请求都是通过该单一Channel发送和获取结果的，而Netty所有请求都是异步，故dubbo如何保证这些并发线程能正确获取到自己的请求结果，而不会造成数据混乱呢？核心实现为：
 1. 客户端Request通过AtomicLong生成的当前进程全局唯一id，服务端响应回传该id；
 2. 客户端通过FUTURES静态ConcurrentHashMap保存调用id和异步结果DefaultFuture之间的关系，服务端响应时，查询根据Response的回传请求id，获取该response对应的DefaultFuture，通过await和signal机制实现请求发起线程和结果获取线程之间的通信，最终请求发起线程得到最终的结果。
@@ -17,7 +17,7 @@ tags:
 
 * 当客户端发起对服务端的RPC调用时，使用的是DubboInvoker的doInvoker方法：
 
-```
+```java
 protected Result doInvoke(final Invocation invocation) throws Throwable {
     RpcInvocation inv = (RpcInvocation) invocation;
     final String methodName = RpcUtils.getMethodName(invocation);
@@ -65,8 +65,8 @@ protected Result doInvoke(final Invocation invocation) throws Throwable {
 ```
 核心关注：调用HeaderExchangeClient发送请求，获取future，这个future是DefaultFuture类，然后封装成FutureAdapter，构造AsyncRpcResult的result：
 
-```
-代码1
+```java
+// 代码1
 ResponseFuture future = currentClient.request(inv, timeout);
 // For compatibility
 FutureAdapter<Object> futureAdapter = new FutureAdapter<>(future);
@@ -89,10 +89,10 @@ public Result getRpcResult() {
     }
     return result;
 }
-即调用了DefaultFuture的get()方法来获取结果，get中会通过DefaultFuture的done，调用done.await进行等待，这里是实现的关键，具体看下面的分析。
+// 即调用了DefaultFuture的get()方法来获取结果，get中会通过DefaultFuture的done，调用done.await进行等待，这里是实现的关键，具体看下面的分析。
 
-代码2
-currentClient.request底层最终调用HeaderExchangeChannel的request方法：通过DefaultFuture.newFuture(channel, req, timeout)创建DefaultFuture实例future并返回。
+// 代码2
+// currentClient.request底层最终调用HeaderExchangeChannel的request方法：通过DefaultFuture.newFuture(channel, req, timeout)创建DefaultFuture实例future并返回。
 
  public ResponseFuture request(Object request, int timeout) throws RemotingException {
     if (closed) {
@@ -112,7 +112,7 @@ currentClient.request底层最终调用HeaderExchangeChannel的request方法：�
     }
     return future;
 }
-其中Request如下：
+// 其中Request如下：
 public Request() {
     mId = newId();
 }
@@ -121,9 +121,9 @@ private static long newId() {
     return INVOKE_ID.getAndIncrement();
 }
 private static final AtomicLong INVOKE_ID = new AtomicLong(0);
-这里是关键：INVOKE_ID是静态递增的AtomicLong，即客户端的每次请求都每个请求都是有一个递增唯一的id的，这个id用于在客户端唯一确定一个请求。
+// 这里是关键：INVOKE_ID是静态递增的AtomicLong，即客户端的每次请求都每个请求都是有一个递增唯一的id的，这个id用于在客户端唯一确定一个请求。
 
-代码3
+// 代码3
 DefaultFuture future = DefaultFuture.newFuture(channel, req, timeout)的实现如下：
 private DefaultFuture(Channel channel, Request request, int timeout) {
     this.channel = channel;
@@ -134,16 +134,16 @@ private DefaultFuture(Channel channel, Request request, int timeout) {
     FUTURES.put(id, this);
     CHANNELS.put(id, channel);
 }
-其中FUTURES.put(id, this);的FUTURES：
+// 其中FUTURES.put(id, this);的FUTURES：
 private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
-即为静态常量，存放请求的id和DefaultFuture。
+// 即为静态常量，存放请求的id和DefaultFuture。
 
 ```
 * 客户端接收到服务端的RPC调用响应，从底层到顶层依次是NettyClient获取NettyServer的响应，NettyClient将响应向上传递给HeaderExchangeHandler的received方法：
 
-```
-代码1
-NettyClient将底层的netty bootstrap交给构造函数传进来的handler处理，这个handler就是HeaderExchangeHandler：
+```java
+// 代码1
+// NettyClient将底层的netty bootstrap交给构造函数传进来的handler处理，这个handler就是HeaderExchangeHandler：
 public NettyClient(final URL url, final ChannelHandler handler) throws RemotingException {
     super(url, wrapChannelHandler(url, handler));
 }
@@ -171,8 +171,8 @@ protected void doOpen() throws Throwable {
     });
 }
 
-代码2
-HeaderExchangeHandler的received实现：对于服务端的响应调用handleResponse方法处理
+// 代码2
+// HeaderExchangeHandler的received实现：对于服务端的响应调用handleResponse方法处理
 @Override
 public void received(Channel channel, Object message) throws RemotingException {
     channel.setAttribute(KEY_READ_TIMESTAMP, System.currentTimeMillis());
@@ -210,7 +210,7 @@ public void received(Channel channel, Object message) throws RemotingException {
     }
 }
 
-handleResponse的实现：静态方法，通过局部变量，即参数传入的方式保证线程安全，调用DefaultFuture.received方法。
+// handleResponse的实现：静态方法，通过局部变量，即参数传入的方式保证线程安全，调用DefaultFuture.received方法。
 static void handleResponse(Channel channel, Response response) throws RemotingException {
     if (response != null && !response.isHeartbeat()) {
         DefaultFuture.received(channel, response);
@@ -235,7 +235,7 @@ public static void received(Channel channel, Response response) {
     }
 }
 
-response将客户端的request的id原样返回了，客户端接收结果线程从FUTURES中移除该请求的id和DefaultFuture实例future，调用future的doReceived处理：调用done的signal通知在done中等待的线程。
+// response将客户端的request的id原样返回了，客户端接收结果线程从FUTURES中移除该请求的id和DefaultFuture实例future，调用future的doReceived处理：调用done的signal通知在done中等待的线程。
 private void doReceived(Response res) {
     lock.lock();
     try {
@@ -251,7 +251,7 @@ private void doReceived(Response res) {
     }
 }
 
-由上面的分析可知，客户端请求时，调用了DefaultFuture的get()方法在请求线程异步来获取结果，get的实现如下：在done调用await等待结果，从而通过await和signal实现线程之间的通信，客户端请求线程得到通知最终获取到了结果。
+// 由上面的分析可知，客户端请求时，调用了DefaultFuture的get()方法在请求线程异步来获取结果，get的实现如下：在done调用await等待结果，从而通过await和signal实现线程之间的通信，客户端请求线程得到通知最终获取到了结果。
 @Override
 public Object get(int timeout) throws RemotingException {
     if (timeout <= 0) {
@@ -282,7 +282,7 @@ public Object get(int timeout) throws RemotingException {
 ```
 * 服务端从Netty Server接收请求，然后向上传给HeaderExchangeHandler处理：
 
-```
+```java
 void handleRequest(final ExchangeChannel channel, Request req) throws RemotingException {
     Response res = new Response(req.getId(), req.getVersion());
     if (req.isBroken()) {
@@ -332,7 +332,7 @@ void handleRequest(final ExchangeChannel channel, Request req) throws RemotingEx
     }
 }
 
-构造response，获取客户端请求req的id，进行回传：Response res = new Response(req.getId(), req.getVersion());
+// 构造response，获取客户端请求req的id，进行回传：Response res = new Response(req.getId(), req.getVersion());
 
 // handle data.
 CompletableFuture<Object> future = handler.reply(channel, msg);
@@ -342,8 +342,8 @@ if (future.isDone()) {
     channel.send(res);
     return;
 }
-调用handler.reply，最终调用本地的Service，进行方法调用，即我们在配置文件中指定的dubbo:service的ref参数对应的bean。
-handler是DubboProtocol中的requestHandler：
+// 调用handler.reply，最终调用本地的Service，进行方法调用，即我们在配置文件中指定的dubbo:service的ref参数对应的bean。
+// handler是DubboProtocol中的requestHandler：
 private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
     @Override
     public CompletableFuture<Object> reply(ExchangeChannel channel, Object message) throws RemotingException {
@@ -394,14 +394,8 @@ private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
     }
  ...
 }
-核心为：invoker在ServiceConfig的export时，封装了实际Server的ref，invoke最终交给ref进行方法调用。
+// 核心为：invoker在ServiceConfig的export时，封装了实际Server的ref，invoke最终交给ref进行方法调用。
 Invoker<?> invoker = getInvoker(channel, inv);
 Result result = invoker.invoke(inv);
 
 ```
-
-
-
-
-
-

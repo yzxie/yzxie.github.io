@@ -22,6 +22,7 @@ tags:
 ### Listener监听器机制：ContextLoaderListener
 * servlet规范当中，使用了Listener监听器机制来进行web容器相关组件的生命周期管理以及Event事件监听器来实现组件之间的交互。
 * 其中一个重要的生命周期监听器是ServletContextListener。web容器在创建和初始化ServletContext的时候，会产生一个ServletContextEvent事件，其中ServletContextEvent包含该ServletContext的引用。然后交给在web.xml中配置的，注册到这个ServletContext的监听器ServletContextListener。ServletContextListener在其contextInitialized方法中定义处理逻辑，接口定义如下：
+
 	```java
 	/**
 	 * Implementations of this interface receive notifications about changes to the
@@ -51,6 +52,7 @@ tags:
 	    public void contextDestroyed(ServletContextEvent sce);
 	}
 	```
+	
 	从contextInitialized的注释可知：通知所有的ServletContextListeners，当前的web应用正在启动，而且这些ServletContextListeners是在Filters和Servlets创建之前接收到通知的。所以在这个时候，web应用还不能接收请求，故可以在这里完成底层处理请求的组件的加载，这样等之后接收请求的Filters和Servlets创建时，则可以使用这些创建好的组件了。spring相关的bean就是这里所说的底层处理请求的组件，如数据库连接池，数据库事务管理器等。
 * ContextLoaderListener：spring-web包的ContextLoaderListener就是一个ServletContextListener的实现类。ContextLoaderListener主要用来获取spring项目的整体配置信息，并创建对应的WebApplicationContext来保存bean的信息，以及创建这些bean的对象实例。默认去WEB-INF下加载applicationContext.xml配置，如果applicationContext.xml放在其他位置，或者使用其他不同的名称，或者使用多个xml文件，则与指定contextConfigLocation。具体spring源码的实现过程后续文章详细分析。
 	```xml

@@ -1,7 +1,7 @@
 ---
 layout:     post
-title:      "Tomcat源码分析：web.xml解析与JavaConfig实现基础ServletContainerInitializer的处理"
-subtitle:   "Tomcat ServletContainerInitializer"
+title:      "Tomcat源码分析（三）：ServletContext应用启动之配置解析"
+subtitle:   "Tomcat servletcontext startup"
 date:       2019-01-03 08:12:00
 author:     "XYZ"
 header-img: "img/article-bg1.jpg"
@@ -16,7 +16,7 @@ tags:
 #### web.xml配置文件配置
 * ServeltContext的配置信息，一般可以通过在web.xml文件中配置，tomcat在加载应用的时候会查找并解析web.xml，将相关信息填充到ServeltContext中，一个典型的web.xml配置如下：
 
-```
+```xml
 出自：https://blog.csdn.net/u010796790/article/details/52098258
 
 <?xml version="1.0" encoding="UTF-8"?>  
@@ -190,9 +190,9 @@ tags:
 
 ```
 #### JavaConfig编程方式配置
-* 在servlet 3.0及以上版本，除了可以通过web.xml方式来配置，还可以通过基于Java类的方式来配置，即JavaConfig机制，从而省去web.xml文件。具体为Servlet 3.0提供了一个ServletContainerInitializer接口，接口定义如下：
+* 在servlet 3.0及以上版本，除了可以通过web.xml方式来配置，还可以通过基于Java类的方式来配置，即JavaConfig机制，从而省去web.xml文件。具体为Servlet 3.0提供了一个**ServletContainerInitializer**接口来支持这种编程方式配置的实现，接口定义如下：
 
-```
+```java
 package javax.servlet;
 
 import java.util.Set;
@@ -235,7 +235,7 @@ public interface ServletContainerInitializer {
    2.  @HandlesTypes：可以在ServletContainerInitializer接口实现类，加上@HandlesTypes，通过在@HandlesTypes注解中，包含对ServeltContext，即应用启动感兴趣的接口，这样在应用启动过程中，则会通知到这些接口的实现类，这些接口实现类可以获取到ServletContext对象，从而可以调用ServletContext的方法对ServletContext填充数据，如addServlet方法来添加Spring的Dispatcher。
 
 * spring对ServletContainerInitializer的实现：主要是定义了一个WebApplicationInitializer接口。onStartup方法的webAppInitializerClasses参数就是WebApplicationInitializer接口的实现类。
-```
+```java
 @HandlesTypes(WebApplicationInitializer.class)
 public class SpringServletContainerInitializer implements ServletContainerInitializer {
    @Override
@@ -282,7 +282,7 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 ```
 * 典型用法：使用一个WebApplicationInitializer接口实现类替换web.xml，如下添加了一个DispatchServlet，与上面在web.xml中，通过servlet标签添加的一样。
 
-```
+```java
 public class MyWebAppInitializer implements WebApplicationInitializer {
      @Override
      public void onStartup(ServletContext container) {
@@ -305,7 +305,7 @@ public class MyWebAppInitializer implements WebApplicationInitializer {
 ```
 * 以上例子还是需要一个applicationContext.xml，如果想完全通过Java的方式来配置，可以结合spring的@Conifguration注解，以及使用AnnotationConfigWebApplicationContext来加载spring的context，来实现：
 
-```
+```java
 import lombok.Data;
 import org.springframework.stereotype.Component;
 
@@ -321,7 +321,7 @@ public class User {
 }
 ```
 通过@ComponentScan来进行包扫描：
-```
+```java
 /**
  * @author xieyizun
  * @date 13/1/2019 15:10
@@ -355,7 +355,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
 }
 ```
 
-```
+```java
 public class MyWebAppInitializer implements WebApplicationInitializer {
     @Override
     public void onStartup(ServletContext container) {
@@ -382,7 +382,7 @@ public class MyWebAppInitializer implements WebApplicationInitializer {
 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);，通知LifeCycleListener，而ContextConfig是其中一个LifeCycleListener。
 * 核心注释：
 
-```
+```java
 /*
   * Anything and everything can override the global and host defaults.
   * This is implemented in two parts
@@ -413,7 +413,7 @@ fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);，通知LifeCycleList
 
 0. WebXmlParser和WebXml对象的创建
 
-```
+```java
 WebXmlParser webXmlParser = new WebXmlParser(context.getXmlNamespaceAware(),
                 context.getXmlValidation(), context.getXmlBlockExternal());
 
@@ -432,7 +432,7 @@ ServletContext sContext = context.getServletContext();
 ```
 1. 从各个jar包中查找web-fragment.xml，并根据这些web-fragment.xml中定义的规则排序：
 
-```
+```java
 // Ordering is important here
 
 // Step 1. Identify all the JARs packaged with the application and those
@@ -448,7 +448,7 @@ orderedFragments =
 ```
 2. 查找ServletContainerInitializer接口的实现，从/WEB-INF/classes和各个jar包中查找@HandlesTypes指定的接口的实现，如spring的**WebApplicationInitializer**，
 
-```
+```java
 // Step 3. Look for ServletContainerInitializer implementations
 if (ok) {
     processServletContainerInitializers();
@@ -488,7 +488,8 @@ if  (!webXml.isMetadataComplete() || typeInitializerMap.size() > 0) {
 }
 ```
 3. 将web-fragment.xml合并到web.xml中，此时是完整的web.xml了，故通过configureContext方法，将web.xml中配置信息添加到StandardContext中。
-```
+
+```java
 if (!webXml.isMetadataComplete()) {
   // Step 6. Merge web-fragment.xml files into the main web.xml
     // file.
@@ -516,7 +517,7 @@ if (!webXml.isMetadataComplete()) {
     configureContext(webXml);
 }
 
-configureContext的实现：主要是从webxml中取出各种信息，然后填充到StandardContext中。
+// configureContext的实现：主要是从webxml中取出各种信息，然后填充到StandardContext中。
 private void configureContext(WebXml webxml) {
     ...
 
@@ -668,7 +669,7 @@ private void configureContext(WebXml webxml) {
 ```
 4. 加载jar包里面的META-INF/resources的静态资源
 
-```
+```java
 // Always need to look for static resources
 // Step 10. Look for static resources packaged in JARs
 if (ok) {
@@ -690,7 +691,8 @@ if (ok) {
 ```
 5. 将查找到的ServletContainerInitializer的实现类对象，添加到StandardContext的initializers中，其中key为ServletContainerInitializer的接口实现类对象，value为
 @HandlesTypes指定的接口的实现类对象的集合，这个之后会在StandardContext的startInternal方法的后续代码中，遍历并调用onStartup方法。
-```
+
+```java
 /**
  * The ordered set of ServletContainerInitializers for this web application.
  */
@@ -698,7 +700,7 @@ private Map<ServletContainerInitializer,Set<Class<?>>> initializers =
     new LinkedHashMap<>();
 ```
 
-```
+```java
 // Step 11. Apply the ServletContainerInitializer config to the
 // context
 if (ok) {
@@ -717,7 +719,8 @@ if (ok) {
 ```
 6. StandardContext的startInternal方法等listener列表执行完返回后继续往下执行，其中上面的ContextConfig为其中一个listener。在以下代码执行ServletContainerInitializer的处理，可以看到是在初始化filter和实例化（配置了load-on-startup）servlet之前执行。
 *   遍历ServletContainerInitializer列表，其中entry.getKey()为：ServletContainerInitializer；entry.getValue()对应@HandlerType对应的类实例列表。在spring中@HandlerType的实现接口为WebApplicationInitializer，调用WebApplicationInitializer的onStartup方法。
-```
+
+```java
 // Set up the context init params
 mergeParameters();
 

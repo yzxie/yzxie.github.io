@@ -52,6 +52,7 @@ tags:
 * 我们在应用代码中通常使用@Controller和@RequestMapping来定义请求和请求处理方法直接的映射关系，这种方式的请求和请求处理方法映射map是基于HandlerMethod来实现的，即将每个处理方法在springMVC中都会抽象成一个HandlerMethod对象，而请求的匹配条件配置，则是通过RequestMappingInfo来定义的。而这个对应HandlerMapping体系结构的设计是RequestMappingHandlerMapping。
 ###### HandlerMethod：基于方法的请求执行器
 * HandlerMethod主要用于封装@Controller注解的类的使用@RequestMapping（或@RequestMapping的变体，如@GetMapping）注解的方法信息，类设计如下：
+
 	```java
 	/**
 	 * Encapsulates information about a handler method consisting of a
@@ -91,6 +92,7 @@ tags:
 ###### RequestMappingInfo：请求的匹配条件
 * 主要是对@RequestMapping注解的相关属性进行封装，然后作为请求和请求处理器映射map的key。通常@RequstMapping可以设置value，params，method，consumes，produces等参数来精确匹配请求。
 * value为匹配的路径；params是匹配的请求参数值；method为处理的http请求方法，consumers为请求的mediaType，produces为响应的mediaType。value，params，consumes，produces都可以设置多个，如下为一个用例：
+
 	```java
 	@RestController  
 	@RequestMapping("/home")  
@@ -114,6 +116,7 @@ tags:
 	}  
 	```
 * RequestMappingInfo的类设计如下：
+
 	```java
 	public final class RequestMappingInfo implements RequestCondition<RequestMappingInfo> {
 		@Nullable
@@ -173,6 +176,7 @@ tags:
 	1. map的创建和初始化
 	由类的继承体系可知，实现了InitializingBean接口，故spring容器在创建这个bean时，填充好所有属性之后，会调用InitializingBean的afterPropertiesSet方法，以下为从RequestMappingHandlerMapping -> RequestMappingInfoHandlerMapping的afterPropertiesSet实现：
 	RequestMappingHandlerMapping的afterPropertiesSet方法定义：
+
 		```java
 			@Override
 			public void afterPropertiesSet() {
@@ -190,6 +194,7 @@ tags:
 			}
 		```
 		RequestMappingInfoHandlerMapping的afterPropertiesSet方法：定义initHandlerMethods完成请求和请求处理器映射map的初始化，故map的初始化是定义在RequestMappingInfoHandlerMapping中的，其整体实现源码如下:
+
 		```java
 			// Handler method detection
 			/**
@@ -223,6 +228,7 @@ tags:
 			}
 		```
 		获取所有Object类型的bean：getCandidateBeanNames
+
 		```java	
 			// 获取所有Object类型的bean
 			
@@ -306,6 +312,7 @@ tags:
 			}	
 		```
 		isHandler方法：判断bean是否是handler，这个是在主类RequestMappingHandlerMapping中定义的：判断bean是否使用@Controller或者@RequestMapping注解
+
 		```java
 			/**
 			 * {@inheritDoc}
@@ -320,6 +327,7 @@ tags:
 		```
 		
 	2. 从请求和请求处理器映射map查找请求处理器：主要是在DispatcherServlet中调用，对应RequestMappingHandlerMapping的底层实现如下：主要是在AbstractHandlerMethodMapping的getHandlerInternal方法定义，AbstractHandlerMethodMapping直接继承于AbstractHandlerMapping。getHandlerInternal的源码实现逻辑如下：
+
 		```java
 		public abstract class AbstractHandlerMethodMapping<T> extends AbstractHandlerMapping implements InitializingBean {
 			/**
@@ -450,6 +458,7 @@ tags:
 	```
 #### 2. 请求处理
 * DispatcherServlet遍历自身的handlerMappings集合，从每个handlerMapping的map中找到处理这个请求的请求处理器：找到一个则返回，其中handlerMappings集合的实例类型，可以是AbstractUrlHandlerMapping的实现，如BeanNameUrlHandlerMapping和SimpleUrlHandlerMapping；或者是AbstractHandlerMethodMapping的实现，如RequestMappingHandlerMapping。
+
 	```java
 	/**
 	 * Return the HandlerExecutionChain for this request.
@@ -476,6 +485,7 @@ tags:
 * 调用HandlerMapping的getHandler方法获取一个请求处理器HandlerExecutionChain。
 #### 3. 请求执行
 * HandlerExecutionChain：由一个请求执行器handler和多个请求拦截器interceptors组成，handler在处理请求之前，需要先调用interceptors的preHandler方法来对请求进行拦截处理，只有通过了全部的拦截器，才能交给请求执行器handler完成真正的请求处理。源码设计如下：
+
 	```java
 	/**
 	 * Handler execution chain, consisting of handler object and any handler interceptors.
@@ -498,6 +508,7 @@ tags:
 	```
 #### 完整请求处理过程	
 * DispatcherServlet中使用doDispatch方法完成整个请求处理，核心处理逻辑如下
+
 ```java
 	/**
 	 * Process the actual dispatching to the handler.
@@ -574,6 +585,7 @@ tags:
 * DispatcherServlet通过HandlerAdapter来间接调用实际的请求执行器handler。由上面分析可知请求执行器包含：Servlet，Controller，HttpRequestHandler，HandlerMethod。
 * 所以与上面这些请求执行器配套的HandlerAdapter分别为：SimpleServletHandlerAdapter，SimpleControllerHandlerAdapter，HttpRequestHandlerAdapter和RequestMappingHandlerAdapter。
 * 如下为SimpleControllerHandlerAdapter的源码：其他类似
+
 	```java
 	package org.springframework.web.servlet.mvc;
 	/**
