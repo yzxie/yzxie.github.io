@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "Spring源码分析（五）：spring-context包的ApplicationContext体系自底向上的设计"
+title:      "Spring源码分析（五）：ApplicationContext体系结构设计之自底向上分析"
 subtitle:   "Spring ApplicationContext design from bottom to up"
 date:       2019-01-08 20:49:00
 author:     "XYZ"
@@ -8,12 +8,15 @@ header-img: "img/article-bg1.jpg"
 tags:
     - Spring源码分析
 ---
+
+### spring-context包
 #### ApplicationContext接口
 ```java
 public interface ApplicationContext extends EnvironmentCapable, ListableBeanFactory, HierarchicalBeanFactory,
 		MessageSource, ApplicationEventPublisher, ResourcePatternResolver
 ```
 * 最底层接口，通过继承BeanFactory接口的方法，定义了与BeanFactory的关联绑定，以及其他功能组件，如Environment，MessageSource等的关联。
+* ApplicationContext是bean容器的一个运行环境，而实际的bean容器为内部绑定的BeanFactory，由BeanFactory来存放bean的元数据beanDefinitions，具体存放在BeanFactory的实现类的一个类型为ConcurrentHashMap的map中，其中key为beanName，value为BeanDefinition；以及bean实例的创建。
 
 #### ConfigurableApplicationContext接口
 
@@ -123,3 +126,63 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		refresh();
 	}
     ```
+
+### spring-web包
+spring-web包提供了一个ApplicationContext的继承接口：WebApplicationContext的类体系设计与ApplicationContext的基本一致，不同之处为：在ApplicationContext的基础上，添加web应用运行相关的一些性质。主要与web容器、servlet相关，核心性质包括：
+
+* ServletContext
+   1. 即该应用在web容器的中运行环境类，ServletContext的启动，触发spring容器WebApplicationContext的启动，即spring容器的创建。
+   2. 将ServletContext中的context-param的键值对数据，放到WebApplicationContext的environment中。servlet相关的则是servletConfig的init-param的键值对数据。
+    
+* WebApplicationContext关联到ServletContext：Spring容器WebApplicationContext对象，作为ServletContext的一个属性关联到ServletContext，属性key为：
+   1. root WebApplicationContext：即包含ROOT
+   
+    ```java
+    String ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE = WebApplicationContext.class.getName() + ".ROOT";
+    ```
+   2. spring-mvc包的FrameworkServlet（或者是DispatcherServlet）所绑定WebApplicationContext为：即包含CONTEXT
+   
+    ```java
+    /** Should we publish the context as a ServletContext attribute?. */
+    private boolean publishContext = true;
+    	
+    protected WebApplicationContext initWebApplicationContext() {
+    	
+    	...
+    
+    	if (this.publishContext) {
+    		// Publish the context as a servlet context attribute.
+    		String attrName = getServletContextAttributeName();
+    		getServletContext().setAttribute(attrName, wac);
+    	}
+    
+    	return wac;
+    }
+    
+    /**
+     * Return the ServletContext attribute name for this servlet's WebApplicationContext.
+     * <p>The default implementation returns
+     * {@code SERVLET_CONTEXT_PREFIX + servlet name}.
+     * @see #SERVLET_CONTEXT_PREFIX
+     * @see #getServletName
+     */
+    public String getServletContextAttributeName() {
+    	return SERVLET_CONTEXT_PREFIX + getServletName();
+    }
+    
+    /**
+     * Prefix for the ServletContext attribute for the WebApplicationContext.
+     * The completion is the servlet name.
+     */
+    public static final String SERVLET_CONTEXT_PREFIX = FrameworkServlet.class.getName() + ".CONTEXT.";
+    ```
+
+    从而可以ServletContext可以访问WebApplicationContext中的bean。
+    
+* ServletConfig
+   1. spring-web包的WebApplicationContext与spring-context包的ApplicationContext一样，通常也是支持层次化的。在web包中，通常包含一个root WebApplicationContext，每个DispatcherServlet绑定一个独立的WebApplicationContext。
+   2. 而作为一个servlet，在web容器中，通常会绑定一个servletConfig来指定该servlet的一些属性，如在web.xml配置这个servlet时，通过init-param标签来指定。所以在WebApplicationContext中，需要在DispatcherServlet绑定的WebApplicationContext中，将与DispatcherServlet绑定的servletConfig中相关的键值对数据，放到该WebApplicationContext的environment中。
+
+* bean配置configLocations固定：
+   1. spring容器的配置通常放在类路径的WEB-INF/applicationContext.xml或者如果是DispatcherServlet，通常为WEB-INF/"servletName"-servlet.xml。或者在web.xml中通过context-param或者servlet的init-param标签，使用contextConfigLocation作为param-name，具体文件位置或者WebApplicationInitializer接口实现类全限定名。
+   2. 如果是编程方式，则通常是从WebApplicationInitializer接口的实现类中指定并注入。
