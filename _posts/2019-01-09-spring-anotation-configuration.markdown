@@ -10,7 +10,7 @@ tags:
 ---
 * 使用@Configuration来注解类，在类里面包含多个@Bean注解的方法。这些使用@Bean注解的方法，会被加载为BeanFactory里面的BeanDefinition，其中beanName默认为方法名，并且默认会创建对应的bean对象实例。其实@Configuration注解的类，就相当于一个xml配置文件的beans标签。
 
-* 生效方式
+* 使@Configuration注解的类生效方式，即被spring容器ApplicationContext感知并加载。
    1. 使用AnnotationConfigApplicationContext，在refresh之前，通过AnnotationConfigApplicationContext的register方法注册这个类，如下：
    
         ```java
@@ -81,7 +81,7 @@ tags:
            // various @Bean definitions ...
         }
         ```
-   2. @PropertySource：为Environment提供propertySource，即指定的属性源的属性键值对也会加载到Environment中，如下：
+   2. @PropertySource：为Environment提供propertySource，即指定的属性源的属性键值对也会加载到Environment中，其中Environment主要用来存放类路径下的相关属性文件，如properties文件，的内容，是spring容器启动时，最先加载的，即在加载bean之前加载，在创建beanDefinition或bean实例对象时就可以直接使用了，如下面的在myBean里面可以直接访问，如下：
    
         ```java
         @Configuration
