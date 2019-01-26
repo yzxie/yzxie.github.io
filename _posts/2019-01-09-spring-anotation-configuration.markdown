@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "基于注解的配置@Configuration详解"
+title:      "Spring基于注解的配置@Configuration详解"
 subtitle:   "Spring Anotation @Configuration"
 date:       2019-01-09 20:49:00
 author:     "XYZ"
