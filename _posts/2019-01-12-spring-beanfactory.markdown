@@ -291,7 +291,7 @@ tags:
 	        this.parsers.put(elementName, parser);
 	    }
         ```
-        3. NamespaceHandler的init方法实现：各个NamespaceHandler接口实现类，在init方法中注册xml的标签和Parser之间的映射关系：如下为context标签的名称空间处理器ContextNamespaceHandler：
+     3. NamespaceHandler的init方法实现：各个NamespaceHandler接口实现类，在init方法中注册xml的标签和Parser之间的映射关系：如下为context标签的名称空间处理器ContextNamespaceHandler：
         
         ```java
         /**
