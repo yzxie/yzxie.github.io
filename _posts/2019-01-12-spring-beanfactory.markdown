@@ -8,7 +8,6 @@ header-img: "img/article-bg1.jpg"
 tags:
     - Spring源码分析
 ---
-
 ### 一. 概述
 * Spring容器通常指的是ApplicationContext的体系结构设计，即整个Spring框架的IOC功能，是通过ApplicationContext接口实现类来提供给应用程序使用的。应用程序通过ApplicationContext提供方法来间接与内部Bean工厂交互，如获取Bean对象实例等。
 * 在Spring框架内部设计当中，ApplicationContext是Spring容器所管理、维护的beans对象的一个运行环境，即ApplicationContext包含一些功能组件：保存外部属性文件（properties文件，yml文件等）的属性键值对集合的Environment，容器配置的位置contextConfigLocation等等，用于创建bean对象需要的一些外部依赖；
@@ -226,71 +225,73 @@ tags:
         ```
         1. 从META-INF/spring.handlers文件加载键值对，并缓存在类型为ConcurrentHashMap的handlerMappings中；
         2. 注意这里并没有初始化NamespaceHandler，即handlerMappings的value还是String类型。
+       
    2. NamespaceHandler包含的parsers的初始化：在resolve方法中进行懒加载初始化。
    
-        ```java
-        /**
-         * Locate the {@link NamespaceHandler} for the supplied namespace URI
-         * from the configured mappings.
-         * @param namespaceUri the relevant namespace URI
-         * @return the located {@link NamespaceHandler}, or {@code null} if none found
-         */
-        @Override
-        @Nullable
-        public NamespaceHandler resolve(String namespaceUri) {
-        
-            // 懒加载NamespaceHandler的handlerMappings
-            
-        	Map<String, Object> handlerMappings = getHandlerMappings();
-        	Object handlerOrClassName = handlerMappings.get(namespaceUri);
-        	if (handlerOrClassName == null) {
-        		return null;
-        	}
-        	
-        	// 不是第一次调用，则已经是NamespaceHandler类型了，可以直接返回
-        	
-        	else if (handlerOrClassName instanceof NamespaceHandler) {
-        		return (NamespaceHandler) handlerOrClassName;
-        	}
-        	
-        	// 第一次调用，由上面分析可知：
-        	// 刚开始从META-INF/spring.handlers
-        	// 读出时，handlerMappings的value是字符串
-        	
-        	else {
-        		String className = (String) handlerOrClassName;
-        		try {
-        		
-        		// 加载NamespaceHandler
-        		
-        			Class<?> handlerClass = ClassUtils.forName(className, this.classLoader);
-        			if (!NamespaceHandler.class.isAssignableFrom(handlerClass)) {
-        				throw new FatalBeanException("Class [" + className + "] for namespace [" + namespaceUri +
-        						"] does not implement the [" + NamespaceHandler.class.getName() + "] interface");
-        			}
-        			NamespaceHandler namespaceHandler = (NamespaceHandler) BeanUtils.instantiateClass(handlerClass);
-        			
-        			// 调用init方法完成parsers的初始化
-        			
-        			namespaceHandler.init();
-        			handlerMappings.put(namespaceUri, namespaceHandler);
-        			return namespaceHandler;
-        		}
-        		catch (ClassNotFoundException ex) {
-        			throw new FatalBeanException("Could not find NamespaceHandler class [" + className +
-        					"] for namespace [" + namespaceUri + "]", ex);
-        		}
-        		catch (LinkageError err) {
-        			throw new FatalBeanException("Unresolvable class definition for NamespaceHandler class [" +
-        					className + "] for namespace [" + namespaceUri + "]", err);
-        		}
-        	}
-        }
-        
-    	protected final void registerBeanDefinitionParser(String elementName, BeanDefinitionParser parser) {
-	        this.parsers.put(elementName, parser);
-	    }
-        ```
+   
+	     ```java
+	      /**
+	       * Locate the {@link NamespaceHandler} for the supplied namespace URI
+	       * from the configured mappings.
+	       * @param namespaceUri the relevant namespace URI
+	       * @return the located {@link NamespaceHandler}, or {@code null} if none found
+	       */
+	      @Override
+	      @Nullable
+	      public NamespaceHandler resolve(String namespaceUri) {
+	      
+	          // 懒加载NamespaceHandler的handlerMappings
+	          
+	      	Map<String, Object> handlerMappings = getHandlerMappings();
+	      	Object handlerOrClassName = handlerMappings.get(namespaceUri);
+	      	if (handlerOrClassName == null) {
+	      		return null;
+	      	}
+	      	
+	      	// 不是第一次调用，则已经是NamespaceHandler类型了，可以直接返回
+	      	
+	      	else if (handlerOrClassName instanceof NamespaceHandler) {
+	      		return (NamespaceHandler) handlerOrClassName;
+	      	}
+	      	
+	      	// 第一次调用，由上面分析可知：
+	      	// 刚开始从META-INF/spring.handlers
+	      	// 读出时，handlerMappings的value是字符串
+	      	
+	      	else {
+	      		String className = (String) handlerOrClassName;
+	      		try {
+	      		
+	      		// 加载NamespaceHandler
+	      		
+	      			Class<?> handlerClass = ClassUtils.forName(className, this.classLoader);
+	      			if (!NamespaceHandler.class.isAssignableFrom(handlerClass)) {
+	      				throw new FatalBeanException("Class [" + className + "] for namespace [" + namespaceUri +
+	      						"] does not implement the [" + NamespaceHandler.class.getName() + "] interface");
+	      			}
+	      			NamespaceHandler namespaceHandler = (NamespaceHandler) BeanUtils.instantiateClass(handlerClass);
+	      			
+	      			// 调用init方法完成parsers的初始化
+	      			
+	      			namespaceHandler.init();
+	      			handlerMappings.put(namespaceUri, namespaceHandler);
+	      			return namespaceHandler;
+	      		}
+	      		catch (ClassNotFoundException ex) {
+	      			throw new FatalBeanException("Could not find NamespaceHandler class [" + className +
+	      					"] for namespace [" + namespaceUri + "]", ex);
+	      		}
+	      		catch (LinkageError err) {
+	      			throw new FatalBeanException("Unresolvable class definition for NamespaceHandler class [" +
+	      					className + "] for namespace [" + namespaceUri + "]", err);
+	      		}
+	      	}
+	      }
+	      
+	  	protected final void registerBeanDefinitionParser(String elementName, BeanDefinitionParser parser) {
+	       this.parsers.put(elementName, parser);
+	   }
+	   ```
      3. NamespaceHandler的init方法实现：各个NamespaceHandler接口实现类，在init方法中注册xml的标签和Parser之间的映射关系：如下为context标签的名称空间处理器ContextNamespaceHandler：
         
         ```java
