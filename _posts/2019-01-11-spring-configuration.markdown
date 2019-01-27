@@ -214,6 +214,7 @@ tags:
    1. 针对集合中的每个@Configuration注解的类时，会处理该类上同时配置的其他注解，如@ComponentScan，扫描指定的包并注册有相关注解的类到BeanFactory中；还包括其他注解的处理，如@Import，@PropertySource等。
    2. 同时会创建该@Configuration注解的类对应的一个类型为ConfigurationClass的对象，将该类中@Bean注解的方式生成BeanMethod，放到类型为ConfigurationClass的对象内部的一个集合beanMethods（类型为LinkedHashSet）里面。并将该类型为ConfigurationClass的对象，放到ConfigurationClassParser的一个map（类型为LinkedHashMap），其中key和value，均为该类型为ConfigurationClass的对象。
 * 处理方法源码如下：
+
 	```java
 	/**
 	 * Apply processing and build a complete {@link ConfigurationClass} by reading the
@@ -309,6 +310,7 @@ tags:
 * 调用ConfigurationClassParser的getConfigurationClasses方法，获取以上所说的map的keySet，即configCandidates对应的类型为ConfigurationClass的列表。
 * 然后遍历这个ConfigurationClass列表，针对每个ConfigurationClass，使用ConfigurationClassBeanDefinitionReader的loadBeanDefinitions方法，从该ConfigurationClass中获取其内部的@Bean注解的方法列表，即BeanMethod列表，或者嵌套@Configuration等包含的BeanMethod，然后将生成的bean，注册到BeanFactory中。
 * 实现源码如下：
+
 	```java
 	/**
 	 * Read a particular {@link ConfigurationClass}, registering bean definitions
