@@ -137,6 +137,7 @@ static final float DEFAULT_LOAD_FACTOR = 0.75f;
 #### 构建红黑树阈值
 * 默认哈希表对应的数组的每个元素是一个链表，具体为存放链表头节点，而在冲突节点较多时，即存在较多key的hash值相同的元素，则会导致链表过长，在应用代码中获取某个key的值value，时间复杂度就会增加，即默认的O(1)变为了O(N)，其中N为该链表长度。
 * 所以为了解决这种情况下的性能问题，JDK1.8提供了从链表转为红黑树，或者从红黑树还原为链表的设计，在红黑树中获取某个节点的时间复杂度为O(logN)，具体阈值如下：
+
     ```java
     /**
      * The bin count threshold for using a tree rather than list for a
