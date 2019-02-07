@@ -1,6 +1,6 @@
 ---
 layout:     post
-title:      "JDK源码分析-NIO缓冲区Buffer"
+title:      "JDK1.8源码分析：NIO缓冲区Buffer"
 subtitle:   "JDK NIO Buffer"
 date:       2018-12-29 07:12:00
 author:     "XYZ"
