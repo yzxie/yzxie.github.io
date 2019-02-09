@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "JDK源码分析：ConcurrentHashMap（JDK1.7和JDK1.8），HashTable与Collections.synchronizedMap"
-subtitle:   "JDK HashMap"
+subtitle:   "JDK ConcurrentHashMap, HashTable, Collections.synchronizedMap"
 date:       2019-01-17 07:12:00
 author:     "XYZ"
 header-img: "img/article-bg1.jpg"

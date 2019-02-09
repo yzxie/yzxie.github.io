@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "JDK源码分析：ConcurrentHashMap（JDK1.8版本）"
-subtitle:   "JDK HashMap"
+subtitle:   "JDK ConcurrentHashMap1.8"
 date:       2019-01-18 07:12:00
 author:     "XYZ"
 header-img: "img/article-bg1.jpg"
