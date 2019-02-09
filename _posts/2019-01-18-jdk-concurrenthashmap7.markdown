@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "JDK源码分析：ConcurrentHashMap（JDK1.7版本）"
-subtitle:   "JDK HashMap"
+subtitle:   "JDK ConcurrentHashMap1.7"
 date:       2019-01-18 07:12:00
 author:     "XYZ"
 header-img: "img/article-bg1.jpg"
@@ -141,6 +141,7 @@ tags:
 #### put写操作
 * 首先通过key的hash确定segments数组的下标，即需要往哪个segment存放数据。确定好segment之后，则调用该segment的put方法，写到该segment内部的哈希表table数组的某个链表中，链表的确定也是根据key的hash值和segment内部table大小取模。
 * 在ConcurrentHashMap中的put操作是没有加锁的，而在Segment中的put操作，通过ReentrantLock加锁：
+
     ```java
     /**
      * Maps the specified key to the specified value in this table.

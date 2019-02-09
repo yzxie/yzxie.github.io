@@ -290,6 +290,7 @@ tags:
 #### size容量计算
 * size方法为计算当前ConcurrentHashMap一共存在多少链表节点，与JDK1.7中每次需要遍历segments数组来计算不同的是，在JDK1.8中，使用baseCount和counterCells数组，在增删链表节点时，实时更新来统计，在size方法中直接返回即可。整个过程不需要加锁。
 * 并发修改异常处理：CounterCell的value值为1，作用是某个线程在更新baseCount时，如果存在其他线程同时在更新，则放弃更新baseCount的值，即保持baseCount不变，而是各自往counterCells数组添加一个counterCell元素，在size方法中，累加counterCells数组的value，然后与baseCount相加，从而获取准确的大小。
+
     ```java
     /**
      * {@inheritDoc}
