@@ -282,6 +282,7 @@ tags:
     }
     ```
 * shouldParkAfterFailedAcquire：当前线程节点在队列中选择一个合适的位置之后，然后阻塞休眠。即找到一个有效的前置节点，并设置该前置节点的waitStatus为SIGNAL，这样这个前置节点执行完之后，发现自身waitStatus为SIGNAL，则会知道自己的下一个线程节点是需要访问共享资源的线程，故会调用unparkSuccessor来唤醒该下一个节点的线程。
+
     ```java	
 	// 当前线程节点查找到一个合适的位置，即前置节点的waitStatus为SIGNAL的，
 	// 然后阻塞休眠，这样该前置节点执行完会release通知唤醒该线程节点
