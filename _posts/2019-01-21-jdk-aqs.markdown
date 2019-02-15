@@ -340,6 +340,7 @@ tags:
     }
     ```
 * addWaiter：创建线程节点并入队，刚开始为直接在队列尾部添加该节点，然后再在上面分析的acquireQueued中，直接执行该线程节点（前置节点就是head，说明该线程节点就是下一个可以执行访问共享资源的线程）或者将从tail往前查找一个有效的前置节点作为该线程节点的前置pre节点，具体在shouldParkAfterFailedAcquire中实现。
+
     ```java
     // 基于指定mode创建线程节点，互斥为EXCLUSIVE
     /**
